@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ケアマックス グループウェア - トップ画面(モックアップ)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Murecho:wght@400;500;600;700&display=swap">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  a { color: #4F5FAD; text-decoration: none; }
+  a:hover { color: #3B4785; }
+  .root {
+    --bg: #F2F3F9;
+    --surface: #FFFFFF;
+    --surface-alt: #F7F8FC;
+    --border: #E1E3F0;
+    --text: #262A3D;
+    --text-soft: #7B7F98;
+    --indigo: #4F5FAD;
+    --indigo-soft: #E3E5F5;
+    --coral: #E2725B;
+    --coral-soft: #FBE3DD;
+    --teal: #3E8E82;
+    --teal-soft: #DDEEEB;
+    font-family: "Murecho", "Hiragino Sans", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .topbar {
+    height: 64px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-name { font-size: 15px; font-weight: 700; letter-spacing: 0.01em; }
+  .nav { display: flex; align-items: center; gap: 28px; }
+  .nav-link { font-size: 14px; color: var(--text-soft); padding-bottom: 4px; border-bottom: 2px solid transparent; }
+  .nav-link.active { color: var(--indigo); font-weight: 700; border-bottom: 2px solid var(--indigo); }
+  .user { display: flex; align-items: center; gap: 10px; }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--indigo); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+  }
+  .user-name { font-size: 13px; color: var(--text); font-weight: 500; }
+  .content { padding: 28px 32px; display: flex; flex-direction: column; gap: 20px; max-width: 1440px; margin: 0 auto; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(38, 42, 61, 0.06);
+    display: flex; flex-direction: column;
+  }
+  .card-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 22px; color: #fff;
+  }
+  .card-head.indigo { background: var(--indigo); }
+  .card-head.coral { background: var(--coral); }
+  .card-head.teal { background: var(--teal); }
+  .card-head-left { display: flex; align-items: center; gap: 9px; }
+  .card-title { font-size: 15px; font-weight: 700; margin: 0; color: #fff; }
+  .more-link { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.9); }
+  .new-btn {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 11.5px; font-weight: 700; color: #fff;
+    background: rgba(255,255,255,0.2); border-radius: 6px; padding: 4px 10px;
+    cursor: pointer; border: none;
+  }
+  .card-body { padding: 20px 22px; display: flex; flex-direction: column; gap: 14px; }
+
+  /* --- ruled-line (罫線) schedule table --- */
+  .week-table {
+    display: grid; grid-template-columns: 132px repeat(7, 1fr);
+    border-top: 1px solid var(--border); border-left: 1px solid var(--border);
+  }
+  .wt-cell { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .wt-head {
+    background: var(--surface-alt); font-size: 11px; color: var(--text-soft);
+    text-align: center; font-weight: 600; padding: 8px 4px;
+    display: flex; flex-direction: column; gap: 2px; align-items: center;
+  }
+  .wt-head.today { background: var(--indigo-soft); color: var(--indigo); font-weight: 700; }
+  .today-badge {
+    background: var(--indigo); color: #fff; font-size: 9px; font-weight: 700;
+    border-radius: 5px; padding: 1px 6px;
+  }
+  .week-nav { display: flex; align-items: center; justify-content: space-between; }
+  .week-range { font-size: 12.5px; font-weight: 700; color: var(--text); }
+  .nav-buttons { display: flex; align-items: center; gap: 6px; }
+  .nav-btn {
+    display: flex; align-items: center; gap: 3px;
+    font-size: 11.5px; font-weight: 600; color: var(--text);
+    background: #fff; border: 1px solid var(--border); border-radius: 6px;
+    padding: 5px 10px; cursor: pointer;
+  }
+  .nav-btn svg { color: var(--text-soft); flex-shrink: 0; }
+  .nav-btn.today-btn { color: var(--indigo); border-color: var(--indigo); font-weight: 700; }
+  .group-cell { align-items: stretch; justify-content: center; text-align: left; padding: 6px 8px; }
+  .group-label { font-size: 9px; color: var(--text-soft); font-weight: 500; margin-bottom: 4px; }
+  .group-pill {
+    display: flex; align-items: center; justify-content: space-between; gap: 6px;
+    background: #fff; border: 1px solid var(--border); border-radius: 6px;
+    padding: 5px 8px; font-size: 11.5px; font-weight: 700; color: var(--text);
+    cursor: pointer;
+  }
+  .group-pill svg { color: var(--text-soft); flex-shrink: 0; }
+  .wt-row-label { display: flex; flex-direction: column; gap: 6px; justify-content: center; padding: 8px 10px; }
+  .wt-name { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; }
+  .self-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--indigo); }
+  .month-btn {
+    width: fit-content; font-size: 10.5px; color: var(--text-soft);
+    border: 1px solid var(--border); background: var(--surface-alt);
+    border-radius: 6px; padding: 3px 9px; cursor: pointer;
+  }
+  .wt-day {
+    background: #fff; min-height: 54px; padding: 6px 8px;
+    display: flex; flex-direction: column; gap: 4px; justify-content: center;
+  }
+  .wt-day.today { background: var(--indigo-soft); }
+  .entry { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text); line-height: 1.3; }
+  .entry .dot { width: 6px; height: 6px; border-radius: 2px; background: var(--indigo); flex-shrink: 0; }
+  .entry.coral .dot { background: var(--coral); }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .list-item { display: flex; flex-direction: column; gap: 3px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .list-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .item-title { font-size: 13.5px; font-weight: 600; }
+  .item-meta { font-size: 11.5px; color: var(--text-soft); }
+</style>
+</head>
+<body>
+<div class="root">
+  <div class="topbar">
+    <div class="brand">
+      <svg width="28" height="28" viewBox="0 0 28 28">
+        <rect x="3" y="3" width="10" height="10" rx="3" fill="#4F5FAD"></rect>
+        <rect x="15" y="3" width="10" height="10" rx="3" fill="#E2725B"></rect>
+        <rect x="9" y="15" width="10" height="10" rx="3" fill="#3E8E82"></rect>
+      </svg>
+      <span class="brand-name">ケアマックス グループウェア</span>
+    </div>
+    <div class="nav">
+      <span class="nav-link active">トップ</span>
+      <span class="nav-link">スケジュール</span>
+      <span class="nav-link">掲示板</span>
+      <span class="nav-link">ファイル</span>
+      <span class="nav-link">管理設定</span>
+    </div>
+    <div class="user">
+      <div class="avatar">直</div>
+      <span class="user-name">高橋 直哉</span>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="card">
+      <div class="card-head indigo">
+        <div class="card-head-left">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="5" width="18" height="16" rx="2"></rect>
+            <path d="M3 10h18"></path>
+            <path d="M8 3v4M16 3v4"></path>
+          </svg>
+          <h2 class="card-title">今週のスケジュール</h2>
+        </div>
+        <a class="more-link" href="#">月表示へ</a>
+      </div>
+      <div class="card-body">
+      <div class="week-nav">
+        <div class="week-range">2026/08/24(月) 〜 2026/08/30(日)</div>
+        <div class="nav-buttons">
+          <button class="nav-btn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M17 6l-6 6 6 6"></path><path d="M11 6l-6 6 6 6"></path></svg>
+            前週
+          </button>
+          <button class="nav-btn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6l-6 6 6 6"></path></svg>
+            前日
+          </button>
+          <button class="nav-btn today-btn">本日</button>
+          <button class="nav-btn">
+            翌日
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6l6 6-6 6"></path></svg>
+          </button>
+          <button class="nav-btn">
+            翌週
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 6l6 6-6 6"></path><path d="M13 6l6 6-6 6"></path></svg>
+          </button>
+        </div>
+      </div>
+      <div class="week-table">
+        <div class="wt-cell wt-head group-cell">
+          <div class="group-label">表示グループ</div>
+          <div class="group-pill">
+            <span>営業部</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+          </div>
+        </div>
+        <div class="wt-cell wt-head">月<br>8/24</div>
+        <div class="wt-cell wt-head today">火<br>8/25 <span class="today-badge">本日</span></div>
+        <div class="wt-cell wt-head">水<br>8/26</div>
+        <div class="wt-cell wt-head">木<br>8/27</div>
+        <div class="wt-cell wt-head">金<br>8/28</div>
+        <div class="wt-cell wt-head">土<br>8/29</div>
+        <div class="wt-cell wt-head">日<br>8/30</div>
+
+        <div class="wt-cell wt-row-label">
+          <div class="wt-name"><span class="self-dot"></span>自分</div>
+          <div class="month-btn">月表示</div>
+        </div>
+        <div class="wt-cell wt-day"><div class="entry"><span class="dot"></span>9:00 定例MTG</div></div>
+        <div class="wt-cell wt-day today">
+          <div class="entry"><span class="dot"></span>10:00 来客対応</div>
+          <div class="entry coral"><span class="dot"></span>15:00 面談</div>
+        </div>
+        <div class="wt-cell wt-day"></div>
+        <div class="wt-cell wt-day"><div class="entry"><span class="dot"></span>終日 外出</div></div>
+        <div class="wt-cell wt-day"></div>
+        <div class="wt-cell wt-day"></div>
+        <div class="wt-cell wt-day"></div>
+
+        <div class="wt-cell wt-row-label">
+          <div class="wt-name">スタッフA</div>
+          <div class="month-btn">月表示</div>
+        </div>
+        <div class="wt-cell wt-day"></div>
+        <div class="wt-cell wt-day today"><div class="entry coral"><span class="dot"></span>13:00 訪問</div></div>
+        <div class="wt-cell wt-day"><div class="entry"><span class="dot"></span>9:30 研修</div></div>
+        <div class="wt-cell wt-day"></div>
+        <div class="wt-cell wt-day"><div class="entry"><span class="dot"></span>終日 休暇</div></div>
+        <div class="wt-cell wt-day"></div>
+        <div class="wt-cell wt-day"></div>
+
+        <div class="wt-cell wt-row-label">
+          <div class="wt-name">スタッフB</div>
+          <div class="month-btn">月表示</div>
+        </div>
+        <div class="wt-cell wt-day"><div class="entry"><span class="dot"></span>11:00 会議室A</div></div>
+        <div class="wt-cell wt-day today"></div>
+        <div class="wt-cell wt-day"></div>
+        <div class="wt-cell wt-day"><div class="entry coral"><span class="dot"></span>14:00 訪問</div></div>
+        <div class="wt-cell wt-day"></div>
+        <div class="wt-cell wt-day"></div>
+        <div class="wt-cell wt-day"></div>
+      </div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head coral">
+          <div class="card-head-left">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="3" width="16" height="18" rx="2"></rect>
+              <path d="M8 8h8M8 12h8M8 16h5"></path>
+            </svg>
+            <h2 class="card-title">お知らせ・掲示板</h2>
+            <button class="new-btn">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg>
+              新規登録
+            </button>
+          </div>
+          <a class="more-link" href="#">もっと見る</a>
+        </div>
+        <div class="card-body">
+        <div class="list-item">
+          <div class="item-title">【全社】年末年始休業のお知らせ</div>
+          <div class="item-meta">更新者: 高橋 ・ 2026/08/20</div>
+        </div>
+        <div class="list-item">
+          <div class="item-title">【総務】備品購入申請のフォーマット変更について</div>
+          <div class="item-meta">更新者: 佐藤 ・ 2026/08/18</div>
+        </div>
+        <div class="list-item">
+          <div class="item-title">【営業部】月次会議の資料を共有します</div>
+          <div class="item-meta">更新者: 鈴木 ・ 2026/08/15</div>
+        </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head teal">
+          <div class="card-head-left">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"></path>
+            </svg>
+            <h2 class="card-title">ファイル共有</h2>
+            <button class="new-btn">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"></path></svg>
+              新規登録
+            </button>
+          </div>
+          <a class="more-link" href="#">もっと見る</a>
+        </div>
+        <div class="card-body">
+        <div class="list-item">
+          <div class="item-title">2026年度_予算計画.xlsx</div>
+          <div class="item-meta">更新者: 佐藤 ・ 2026/08/22</div>
+        </div>
+        <div class="list-item">
+          <div class="item-title">訪問スケジュール_8月.pdf</div>
+          <div class="item-meta">更新者: 高橋 ・ 2026/08/21</div>
+        </div>
+        <div class="list-item">
+          <div class="item-title">研修資料_接遇マナー.pptx</div>
+          <div class="item-meta">更新者: 鈴木 ・ 2026/08/19</div>
+        </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

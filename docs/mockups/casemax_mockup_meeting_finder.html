@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>会議候補日時の自動抽出(モックアップ)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Murecho:wght@400;500;600;700&display=swap">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  a { color: #4F5FAD; text-decoration: none; }
+  a:hover { color: #3B4785; }
+  .root {
+    --bg: #F2F3F9;
+    --surface: #FFFFFF;
+    --surface-alt: #F7F8FC;
+    --border: #E1E3F0;
+    --text: #262A3D;
+    --text-soft: #7B7F98;
+    --indigo: #4F5FAD;
+    --indigo-soft: #E3E5F5;
+    --coral: #E2725B;
+    --coral-soft: #FBE3DD;
+    --teal: #3E8E82;
+    --teal-soft: #DDEEEB;
+    font-family: "Murecho", "Hiragino Sans", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  .topbar {
+    height: 64px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-name { font-size: 15px; font-weight: 700; letter-spacing: 0.01em; }
+  .nav { display: flex; align-items: center; gap: 28px; }
+  .nav-link { font-size: 14px; color: var(--text-soft); padding-bottom: 4px; border-bottom: 2px solid transparent; }
+  .nav-link.active { color: var(--indigo); font-weight: 700; border-bottom: 2px solid var(--indigo); }
+  .user { display: flex; align-items: center; gap: 10px; }
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--indigo); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+  }
+  .user-name { font-size: 13px; color: var(--text); font-weight: 500; }
+
+  .page-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 32px 0; max-width: 1440px; margin: 0 auto;
+  }
+  .back-link { display: flex; align-items: center; gap: 4px; font-size: 12.5px; color: var(--text-soft); font-weight: 600; }
+  .page-title { font-size: 18px; font-weight: 700; margin: 4px 0 0; }
+  .page-sub { font-size: 12.5px; color: var(--text-soft); margin-top: 2px; }
+
+  .finder-grid { display: grid; grid-template-columns: 380px 1fr; gap: 20px; padding: 18px 32px 32px; align-items: start; max-width: 1440px; margin: 0 auto; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    overflow: hidden; box-shadow: 0 2px 6px rgba(38, 42, 61, 0.06);
+    display: flex; flex-direction: column;
+  }
+  .card-head { display: flex; align-items: center; gap: 9px; padding: 14px 20px; color: #fff; }
+  .card-head.indigo { background: var(--indigo); }
+  .card-head.teal { background: var(--teal); }
+  .card-title { font-size: 14.5px; font-weight: 700; margin: 0; color: #fff; }
+  .card-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 16px; }
+
+  .field { display: flex; flex-direction: column; gap: 7px; }
+  .field-label { font-size: 11.5px; font-weight: 700; color: var(--text-soft); letter-spacing: 0.02em; }
+
+  .dept-pill {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    background: #fff; border: 1px solid var(--border); border-radius: 8px;
+    padding: 9px 12px; font-size: 13px; font-weight: 700; color: var(--text);
+    cursor: pointer;
+  }
+  .dept-pill svg { color: var(--text-soft); flex-shrink: 0; }
+
+  .member-list { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .member-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--border); }
+  .member-row:last-child { border-bottom: none; }
+  .member-row.disabled { background: var(--surface-alt); }
+  .checkbox { width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--border); background: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .checkbox.checked { background: var(--indigo); border-color: var(--indigo); }
+  .checkbox.disabled { background: var(--indigo-soft); border-color: var(--indigo-soft); }
+  .member-avatar {
+    width: 24px; height: 24px; border-radius: 50%; background: var(--indigo-soft); color: var(--indigo);
+    font-size: 10.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .member-name { font-size: 13px; font-weight: 600; flex-grow: 1; }
+  .member-tag { font-size: 10px; color: var(--text-soft); background: var(--surface-alt); border-radius: 5px; padding: 2px 6px; }
+
+  .duration-pill { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .duration-pill svg { color: var(--text-soft); }
+
+  .date-range { display: flex; align-items: center; gap: 8px; }
+  .date-box { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; background: #fff; font-size: 12.5px; font-weight: 700; display: flex; align-items: center; gap: 6px; flex: 1; }
+  .date-box.editable { color: var(--indigo); cursor: pointer; }
+  .date-sep { font-size: 12px; color: var(--text-soft); }
+  .hint { font-size: 10.5px; color: var(--text-soft); }
+
+  .static-box { border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; background: var(--surface-alt); font-size: 12.5px; font-weight: 600; color: var(--text-soft); }
+
+  .search-btn {
+    background: var(--indigo); color: #fff; font-weight: 700; font-size: 13.5px;
+    border-radius: 8px; padding: 12px; text-align: center; margin-top: 2px; cursor: pointer;
+  }
+
+  .results-list { display: flex; flex-direction: column; gap: 12px; }
+  .result-card {
+    border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px;
+    display: flex; align-items: center; gap: 16px; background: #fff;
+  }
+  .result-rank {
+    width: 30px; height: 30px; border-radius: 50%; background: var(--teal-soft); color: var(--teal);
+    font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .result-main { display: flex; flex-direction: column; gap: 5px; flex-grow: 1; }
+  .result-date { font-size: 14.5px; font-weight: 700; }
+  .result-time { font-size: 12.5px; color: var(--text-soft); }
+  .result-badge { font-size: 10.5px; font-weight: 700; color: var(--teal); background: var(--teal-soft); border-radius: 6px; padding: 3px 8px; width: fit-content; }
+  .result-action { font-size: 12.5px; font-weight: 700; color: #fff; background: var(--indigo); border-radius: 7px; padding: 9px 16px; flex-shrink: 0; cursor: pointer; }
+  .results-note { font-size: 11px; color: var(--text-soft); padding: 2px 4px 0; }
+
+  .copy-section { margin-top: 6px; border-top: 1px solid var(--border); padding-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .copy-head { display: flex; align-items: center; justify-content: space-between; }
+  .copy-title { font-size: 12.5px; font-weight: 700; color: var(--text-soft); }
+  .copy-btn { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #fff; background: var(--indigo); border-radius: 7px; padding: 8px 14px; cursor: pointer; }
+  .copy-preview {
+    background: var(--surface-alt); border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px 16px; font-size: 12.5px; line-height: 1.85; color: var(--text); white-space: pre-line;
+  }
+</style>
+</head>
+<body>
+<div class="root">
+  <div class="topbar">
+    <div class="brand">
+      <svg width="28" height="28" viewBox="0 0 28 28">
+        <rect x="3" y="3" width="10" height="10" rx="3" fill="#4F5FAD"></rect>
+        <rect x="15" y="3" width="10" height="10" rx="3" fill="#E2725B"></rect>
+        <rect x="9" y="15" width="10" height="10" rx="3" fill="#3E8E82"></rect>
+      </svg>
+      <span class="brand-name">ケアマックス グループウェア</span>
+    </div>
+    <div class="nav">
+      <span class="nav-link">トップ</span>
+      <span class="nav-link active">スケジュール</span>
+      <span class="nav-link">掲示板</span>
+      <span class="nav-link">ファイル</span>
+      <span class="nav-link">管理設定</span>
+    </div>
+    <div class="user">
+      <div class="avatar">直</div>
+      <span class="user-name">高橋 直哉</span>
+    </div>
+  </div>
+
+  <div class="page-head">
+    <div>
+      <div class="back-link">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6l-6 6 6 6"></path></svg>
+        スケジュールに戻る
+      </div>
+      <h1 class="page-title">会議候補日時の自動抽出</h1>
+      <div class="page-sub">選んだメンバー全員の予定を突き合わせて、空いている候補日時を提示します</div>
+    </div>
+  </div>
+
+  <div class="finder-grid">
+    <div class="card">
+      <div class="card-head indigo">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="M20 20l-3.5-3.5"></path>
+        </svg>
+        <h2 class="card-title">検索条件</h2>
+      </div>
+      <div class="card-body">
+        <div class="field">
+          <div class="field-label">対象者(部署を選ぶとメンバーが一覧表示されます)</div>
+          <div class="dept-pill">
+            <span>営業部</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+          </div>
+          <div class="member-list">
+            <div class="member-row disabled">
+              <div class="checkbox checked disabled">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"></path></svg>
+              </div>
+              <div class="member-avatar">直</div>
+              <div class="member-name">高橋 直哉(自分)</div>
+              <div class="member-tag">主催者</div>
+            </div>
+            <div class="member-row">
+              <div class="checkbox checked">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"></path></svg>
+              </div>
+              <div class="member-avatar">山</div>
+              <div class="member-name">山田</div>
+            </div>
+            <div class="member-row">
+              <div class="checkbox checked">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"></path></svg>
+              </div>
+              <div class="member-avatar">佐</div>
+              <div class="member-name">佐藤</div>
+            </div>
+            <div class="member-row">
+              <div class="checkbox"></div>
+              <div class="member-avatar">鈴</div>
+              <div class="member-name">鈴木</div>
+            </div>
+            <div class="member-row">
+              <div class="checkbox"></div>
+              <div class="member-avatar">高</div>
+              <div class="member-name">高木</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">会議の所要時間</div>
+          <div class="duration-pill">
+            <span>1時間</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">検索期間</div>
+          <div class="date-range">
+            <div class="date-box">本日 8/27</div>
+            <span class="date-sep">〜</span>
+            <div class="date-box editable">
+              9/10
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18"></path><path d="M8 3v4M16 3v4"></path></svg>
+            </div>
+          </div>
+          <div class="hint">既定は本日から2週間。終了日は変更できます</div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">営業時間帯</div>
+          <div class="static-box">平日 9:00〜17:30(固定)</div>
+        </div>
+
+        <div class="search-btn">この条件で候補日を検索</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head teal">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="5" width="18" height="16" rx="2"></rect>
+          <path d="M3 10h18"></path>
+          <path d="M8 3v4M16 3v4"></path>
+          <path d="M9 15l2 2 4-4"></path>
+        </svg>
+        <h2 class="card-title">候補日時(3件)</h2>
+      </div>
+      <div class="card-body">
+        <div class="results-list">
+          <div class="result-card">
+            <div class="result-rank">1</div>
+            <div class="result-main">
+              <div class="result-date">2026年8月28日(金)</div>
+              <div class="result-time">10:00 〜 11:00</div>
+              <div class="result-badge">選択した5名全員が参加可能</div>
+            </div>
+            <div class="result-action">この日程で予定を作成</div>
+          </div>
+          <div class="result-card">
+            <div class="result-rank">2</div>
+            <div class="result-main">
+              <div class="result-date">2026年9月1日(火)</div>
+              <div class="result-time">14:00 〜 15:00</div>
+              <div class="result-badge">選択した5名全員が参加可能</div>
+            </div>
+            <div class="result-action">この日程で予定を作成</div>
+          </div>
+          <div class="result-card">
+            <div class="result-rank">3</div>
+            <div class="result-main">
+              <div class="result-date">2026年9月3日(木)</div>
+              <div class="result-time">9:30 〜 10:30</div>
+              <div class="result-badge">選択した5名全員が参加可能</div>
+            </div>
+            <div class="result-action">この日程で予定を作成</div>
+          </div>
+        </div>
+        <div class="results-note">※「非表示」設定の予定も、時間帯は埋まっているものとして計算しています</div>
+
+        <div class="copy-section">
+          <div class="copy-head">
+            <span class="copy-title">コピー用テキスト</span>
+            <div class="copy-btn">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"></rect><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"></path></svg>
+              コピーする
+            </div>
+          </div>
+          <div class="copy-preview">下記の候補日程より、ご都合の良い日程をお知らせいただけますと幸いです。
+
+① 2026年8月28日(金) 10:00〜11:00
+② 2026年9月1日(火) 14:00〜15:00
+③ 2026年9月3日(木) 9:30〜10:30
+
+何卒よろしくお願いいたします。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
