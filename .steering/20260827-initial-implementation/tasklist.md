@@ -23,17 +23,18 @@
 
 ## 1. DBスキーマ(01〜09マイグレーション)
 
-- [ ] 01_users_groups(USER, GROUP, USER_GROUP)
-- [ ] 02_board(POST, COMMENT, ATTACHMENT、PERMALINK_SLUG含む)
-- [ ] 03_calendar(CALENDAR_EVENT)
-- [ ] 04_holidays(HOLIDAY)
-- [ ] 05_top_page(TOP_PAGE_SETTING, GROUP_MEMBER_ORDER)
-- [ ] 06_rooms(MEETING_ROOM, ROOM_RESERVATION)
-- [ ] 07_files(FOLDER, FILE_ITEM, FILE_VERSION、PERMALINK_SLUG含む)
-- [ ] 08_logs(OPERATION_LOG)
-- [ ] 09_google_sync(GOOGLE_CALENDAR_LINK)
+- [x] マイグレーション実行の仕組み(`backend/src/db/migrate.ts`、`schema_migrations`テーブルで適用済み管理、`npm run migrate`)
+- [x] 001_users_groups(app_user, app_group, user_group)
+- [x] 002_board(post, post_comment, post_attachment、permalink_slug含む)
+- [x] 003_calendar(calendar_event)
+- [x] 004_holidays(holiday)
+- [x] 005_top_page(top_page_setting, group_member_order)
+- [x] 006_rooms(meeting_room, room_reservation)
+- [x] 007_files(folder, file_item, file_version、permalink_slug含む)
+- [x] 008_logs(operation_log)
+- [x] 009_google_sync(google_calendar_link)
 
-**完了条件**: `docs/functional-design.md` のER図と一致するスキーマがマイグレーションで再現できる。
+**完了条件**: `docs/functional-design.md` のER図と一致するスキーマがマイグレーションで再現できる。→ SQLファイル・型チェック・ビルドは完了。**実DBへの適用は未実施**(本プロジェクト専用の接続アカウントが未発行のため。発行後に`npm run migrate`で適用し、実データで動作確認する)。
 
 ## 2. 認証・利用者管理
 
@@ -165,7 +166,7 @@
 
 ## 進捗状況
 
-0章(基盤構築)の大部分に着手済み(2026-08-27時点)。詳細は0章の各チェック状態を参照。1章(DBスキーマ)以降は未着手。
+0章(基盤構築)の大部分、1章(DBスキーマ)のSQL作成・マイグレーション基盤を完了(2026-08-27時点)。1章は実DBへの適用が残っているほかは完了。2章(認証・利用者管理)以降は未着手。
 
 ## 全体の完了条件
 
