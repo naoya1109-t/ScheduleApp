@@ -10,6 +10,7 @@ function required(name: string): string {
 
 export const env = {
   port: Number(process.env.PORT ?? 3001),
+  sessionSecret: required("SESSION_SECRET"),
   db: {
     server: required("DB_SERVER"),
     port: Number(process.env.DB_PORT ?? 1433),

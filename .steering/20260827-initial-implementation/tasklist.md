@@ -38,12 +38,14 @@
 
 ## 2. 認証・利用者管理
 
-- [ ] ログイン画面・セッション/認証処理
-- [ ] パスワードのハッシュ化保存(再表示不可)
-- [ ] 利用者CRUD(管理者限定): 氏名・メール・ログインID・社員番号・所属グループ(複数可)・権限区分
-- [ ] 退職処理(論理削除、ログイン禁止化)
+- [x] ログイン画面・セッション/認証処理(express-session、Cookieベース。フロントに`LoginPage`・`AuthContext`・`RequireAuth`を実装)
+- [x] パスワードのハッシュ化保存(bcrypt、再表示不可。ユニットテストで平文非保持・照合を検証)
+- [x] 利用者CRUD(管理者限定): 氏名・メール・ログインID・社員番号・所属グループ(複数可)・権限区分。`/api/admin/users`+管理画面UI(`UsersPage`)
+- [x] 退職処理(論理削除、ログイン禁止化。`status=retired`でログイン不可になることをユニットテストで確認)
 
-**完了条件**: 管理者が利用者を登録・編集・退職処理でき、一般社員はログインのみ可能。パスワードがハッシュ化されていることをDB上で確認できる。
+**完了条件**: 管理者が利用者を登録・編集・退職処理でき、一般社員はログインのみ可能。パスワードがハッシュ化されていることをDB上で確認できる。→ ロジックはフェイクリポジトリによるユニットテスト(bcryptハッシュ化・ログイン可否・退職処理)で検証済み。**実SQL Serverでの最終確認は未実施**(接続アカウント未発行のため)。
+
+**メモ(2026-08-27)**: リポジトリ層は`UserRepository`インターフェースで抽象化し、本番用の`MssqlUserRepository`とテスト用の`FakeUserRepository`を用意。DB未接続でもビジネスロジックを検証できる構成にした。また、非同期ルートハンドラでDBエラーが未捕捉のままプロセスをクラッシュさせる不具合を発見し、`asyncHandler`+`errorHandler`ミドルウェアで修正(実機のダミー認証情報での動作確認中に発見)。初回管理者作成用に`npm run seed:admin`を追加。フロントはVite開発サーバーで`/api`を`localhost:3001`へプロキシする構成とし、本番のIIS ARR構成とパスの扱いを一致させた。SPAルーティング(react-router-dom採用)に伴い`deploy/iis/frontend.web.config`(SPAフォールバック)・`backend.web.config`(ARRリバースプロキシ)のテンプレートを追加。
 
 ## 3. お知らせ・掲示板
 
@@ -152,8 +154,8 @@
 
 ## 14. 本番デプロイ(Windows Server + IIS)
 
-- [ ] `deploy/iis/frontend.web.config` の作成(静的配信+SPAフォールバックのURL Rewrite)
-- [ ] `deploy/iis/backend.web.config` の作成(ARRによる`/api/*`リバースプロキシ設定)
+- [x] `deploy/iis/frontend.web.config` の作成(静的配信+SPAフォールバックのURL Rewrite。実機未検証)
+- [x] `deploy/iis/backend.web.config` の作成(ARRによる`/api/*`リバースプロキシ設定。実機未検証)
 - [ ] Node.jsバックエンドをWindowsサービス化するスクリプトの作成(`deploy/service/`、方式は`docs/architecture.md`未確定事項で選定)
 - [ ] 本番Windows ServerへのIIS ARR・URL Rewriteモジュールの導入確認
 - [ ] 本番Windows Server ⇔ SQL Server(10.194.5.57)間のネットワーク到達性確認

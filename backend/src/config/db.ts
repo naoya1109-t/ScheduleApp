@@ -14,10 +14,27 @@ const config: sql.config = {
 }
 
 let pool: sql.ConnectionPool | undefined
+let connecting: Promise<sql.ConnectionPool> | undefined
 
 export async function getPool(): Promise<sql.ConnectionPool> {
-  if (!pool) {
-    pool = await new sql.ConnectionPool(config).connect()
+  if (pool) {
+    return pool
   }
-  return pool
+  if (!connecting) {
+    connecting = new sql.ConnectionPool(config)
+      .connect()
+      .then((connectedPool) => {
+        // 接続が切れた場合にプロセスがクラッシュしないよう、'error'イベントを必ず受け取る
+        connectedPool.on("error", (err) => {
+          console.error("SQL Server接続エラー", err)
+          pool = undefined
+        })
+        pool = connectedPool
+        return connectedPool
+      })
+      .finally(() => {
+        connecting = undefined
+      })
+  }
+  return connecting
 }
