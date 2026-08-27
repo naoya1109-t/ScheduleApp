@@ -13,7 +13,8 @@ out/
 !.env.example
 
 # File share実体(ローカルディスク保存先)
-storage/
+storage/*
+!storage/.gitkeep
 
 # Logs
 *.log

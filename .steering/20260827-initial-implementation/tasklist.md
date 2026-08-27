@@ -10,13 +10,16 @@
 
 ## 0. 基盤構築
 
-- [ ] リポジトリ雛形作成(`docs/repository-structure.md` 準拠のディレクトリ構成)
-- [ ] フロントエンド初期化(React + TypeScript + Tailwind CSS、モックアップのカラー/フォント/角丸トークンを設定に反映)
-- [ ] バックエンド初期化(Node.js + TypeScript、モジュール構成の雛形)
-- [ ] DB接続・マイグレーション基盤のセットアップ
-- [ ] CI設定(lint・型チェック・テストの自動実行)
+- [x] リポジトリ雛形作成(`docs/repository-structure.md` 準拠のディレクトリ構成。frontend/backend/shared/scripts/docker/storageを作成)
+- [x] フロントエンド初期化(Vite + React + TypeScript + Tailwind CSS v4。モックアップのカラー/Murechoフォント/角丸トークンを`src/index.css`の`@theme`に反映。`npm run build`成功を確認)
+- [x] バックエンド初期化(Node.js + TypeScript + Express。`src/modules/*`の11モジュールディレクトリを作成。`npm run build`/`npm run typecheck`成功を確認)
+- [x] DB接続基盤のセットアップ(`mssql`ドライバで社内SQL Server 10.194.5.57への接続を実装。`/api/health/db`で実機接続を確認済み、要件定義書通りTLS証明書は`trustServerCertificate: true`が必要と判明)
+- [ ] マイグレーション基盤(`backend/src/db/migrations/`はディレクトリのみ作成済み。実スキーマは1章で対応)
+- [ ] CI設定(lint・型チェック・テストの自動実行。GitHub Actions等のワークフローは未作成)
 
-**完了条件**: 空のフロントエンド/バックエンドアプリがローカルで起動し、CIが通る状態。
+**完了条件**: 空のフロントエンド/バックエンドアプリがローカルで起動し、CIが通る状態。→ ローカル起動・ビルド・DB疎通は確認済み。CI未設定のため本章は完了扱いにしない。
+
+**メモ(2026-08-27)**: Vite 8(rolldown版)がこの開発機のNode.js v22.11.0(要件v20.19+/v22.12+)と噛み合わずネイティブバイナリエラーが発生したため、安定版のVite 6系に固定した。バックエンドはExpressを採用(Fastifyとの比較検討はせず、チームの学習コストの低さを優先)。DBアクセスはORMを使わず`mssql`(tedious)を直接使用する方針(`docs/architecture.md`で確定)。
 
 ## 1. DBスキーマ(01〜09マイグレーション)
 
@@ -146,11 +149,23 @@
 
 **完了条件**: バックアップが日次で自動実行され、本体サーバー障害時にも復元可能な場所に保存されている。
 
+## 14. 本番デプロイ(Windows Server + IIS)
+
+- [ ] `deploy/iis/frontend.web.config` の作成(静的配信+SPAフォールバックのURL Rewrite)
+- [ ] `deploy/iis/backend.web.config` の作成(ARRによる`/api/*`リバースプロキシ設定)
+- [ ] Node.jsバックエンドをWindowsサービス化するスクリプトの作成(`deploy/service/`、方式は`docs/architecture.md`未確定事項で選定)
+- [ ] 本番Windows ServerへのIIS ARR・URL Rewriteモジュールの導入確認
+- [ ] 本番Windows Server ⇔ SQL Server(10.194.5.57)間のネットワーク到達性確認
+- [ ] HTTPS証明書のIISへのバインド
+- [ ] 本番環境向け`.env`(DB接続情報等)の配置・管理方法の確立
+
+**完了条件**: 本番Windows Server上でフロントエンド(静的配信)・バックエンド(ARR経由のAPI)・DB接続のすべてが疎通し、HTTPSでアクセスできる。
+
 ---
 
 ## 進捗状況
 
-全タスク未着手(2026-08-27時点)。基盤構築(0章)から着手する。
+0章(基盤構築)の大部分に着手済み(2026-08-27時点)。詳細は0章の各チェック状態を参照。1章(DBスキーマ)以降は未着手。
 
 ## 全体の完了条件
 

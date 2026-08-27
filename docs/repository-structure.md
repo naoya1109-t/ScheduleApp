@@ -84,7 +84,13 @@ ScApp/
 │
 ├── scripts/                       # 運用・移行スクリプト(データ移行、バックアップ等)
 │
-└── docker/                        # コンテナ構成(Docker Compose等)
+├── deploy/                        # 本番デプロイ関連(IIS: web.config、Windowsサービス登録スクリプト等)
+│   ├── iis/
+│   │   ├── frontend.web.config    # 静的配信+SPAフォールバック用URL Rewrite
+│   │   └── backend.web.config     # ARRリバースプロキシ設定(/api/* → Node.jsプロセス)
+│   └── service/                   # Node.jsを常駐化するWindowsサービス登録スクリプト
+│
+└── docker/                        # ローカル開発用のコンテナ構成(任意、本番では未使用)
 ```
 
 ---
@@ -102,6 +108,8 @@ ScApp/
 | `backend/src/db/` | ER図(`functional-design.md`)に対応するスキーマ・マイグレーション |
 | `storage/` | ファイル共有機能がアップロードされたファイル実体を保存する場所(DBにはメタデータのみ保持) |
 | `scripts/` | データ移行・バックアップ運用など、アプリケーション本体に含めない補助スクリプト |
+| `deploy/iis/` | 本番Windows Server + IISでの配置に使う`web.config`テンプレート(静的配信+SPAフォールバック、ARRリバースプロキシ設定)。`docs/architecture.md` 1-3章の構成に対応 |
+| `deploy/service/` | Node.jsバックエンドをWindowsサービスとして常駐化するための登録・起動スクリプト |
 
 ---
 
