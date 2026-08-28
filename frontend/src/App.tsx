@@ -5,6 +5,7 @@ import { RequireAuth } from "./context/RequireAuth"
 import { LoginPage } from "./pages/login/LoginPage"
 import { UsersPage } from "./pages/admin/users/UsersPage"
 import { BoardListPage } from "./pages/board/BoardListPage"
+import { CalendarPage } from "./pages/calendar/CalendarPage"
 import { NewPostPage } from "./pages/board/NewPostPage"
 import { PostDetailPage } from "./pages/board/PostDetailPage"
 import { PostPermalinkRedirect } from "./pages/board/PostPermalinkRedirect"
@@ -32,6 +33,16 @@ function App() {
             <RequireAuth>
               <Layout>
                 <TopPage />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/calendar"
+          element={
+            <RequireAuth>
+              <Layout>
+                <CalendarPage />
               </Layout>
             </RequireAuth>
           }

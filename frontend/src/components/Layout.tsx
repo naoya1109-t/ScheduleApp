@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext"
 
 const NAV_ITEMS = [
   { to: "/", label: "トップ" },
+  { to: "/calendar", label: "スケジュール" },
   { to: "/board", label: "掲示板" },
 ]
 

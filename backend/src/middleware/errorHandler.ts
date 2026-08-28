@@ -1,4 +1,5 @@
 import type { NextFunction, Request, Response } from "express"
+import { HttpError } from "./httpError.js"
 
 export function errorHandler(
   err: unknown,
@@ -6,9 +7,13 @@ export function errorHandler(
   res: Response,
   _next: NextFunction,
 ): void {
-  console.error(err)
   if (res.headersSent) {
     return
   }
+  if (err instanceof HttpError) {
+    res.status(err.status).json({ message: err.message })
+    return
+  }
+  console.error(err)
   res.status(500).json({ message: "サーバー内部でエラーが発生しました" })
 }
