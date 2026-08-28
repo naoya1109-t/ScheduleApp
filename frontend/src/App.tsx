@@ -1,29 +1,22 @@
 import { Navigate, Route, Routes } from "react-router-dom"
-import { AuthProvider, useAuth } from "./context/AuthContext"
+import { Layout } from "./components/Layout"
+import { AuthProvider } from "./context/AuthContext"
 import { RequireAuth } from "./context/RequireAuth"
 import { LoginPage } from "./pages/login/LoginPage"
 import { UsersPage } from "./pages/admin/users/UsersPage"
+import { BoardListPage } from "./pages/board/BoardListPage"
+import { NewPostPage } from "./pages/board/NewPostPage"
+import { PostDetailPage } from "./pages/board/PostDetailPage"
+import { PostPermalinkRedirect } from "./pages/board/PostPermalinkRedirect"
 
 function TopPage() {
-  const { user, logout } = useAuth()
   return (
-    <div className="min-h-screen">
-      <header className="flex h-16 items-center justify-between border-b border-border bg-surface px-8">
-        <span className="text-[15px] font-bold">ケアマックス グループウェア</span>
-        <div className="flex items-center gap-4 text-sm">
-          <span>{user?.name}</span>
-          <button onClick={() => logout()} className="text-text-soft">
-            ログアウト
-          </button>
-        </div>
-      </header>
-      <main className="mx-auto max-w-[1440px] p-8">
-        <div className="rounded-[14px] border border-border bg-surface p-6 shadow-sm">
-          <p className="text-text-soft">
-            トップ画面は準備中です。docs/mockups/casemax_mockup_top.html を参考に実装していきます。
-          </p>
-        </div>
-      </main>
+    <div className="mx-auto max-w-[1440px] p-8">
+      <div className="rounded-[14px] border border-border bg-surface p-6 shadow-sm">
+        <p className="text-text-soft">
+          トップ画面は準備中です。docs/mockups/casemax_mockup_top.html を参考に実装していきます。
+        </p>
+      </div>
     </div>
   )
 }
@@ -37,7 +30,49 @@ function App() {
           path="/"
           element={
             <RequireAuth>
-              <TopPage />
+              <Layout>
+                <TopPage />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/board"
+          element={
+            <RequireAuth>
+              <Layout>
+                <BoardListPage />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/board/new"
+          element={
+            <RequireAuth>
+              <Layout>
+                <NewPostPage />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/board/link/:slug"
+          element={
+            <RequireAuth>
+              <Layout>
+                <PostPermalinkRedirect />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/board/:postId"
+          element={
+            <RequireAuth>
+              <Layout>
+                <PostDetailPage />
+              </Layout>
             </RequireAuth>
           }
         />
@@ -45,7 +80,9 @@ function App() {
           path="/admin/users"
           element={
             <RequireAuth adminOnly>
-              <UsersPage />
+              <Layout>
+                <UsersPage />
+              </Layout>
             </RequireAuth>
           }
         />

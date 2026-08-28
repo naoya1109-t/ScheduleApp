@@ -6,6 +6,10 @@ import { getPool } from "./config/db.js"
 import { errorHandler } from "./middleware/errorHandler.js"
 import { AuthService } from "./modules/auth/authService.js"
 import { createAuthRoutes } from "./modules/auth/authRoutes.js"
+import { createBoardRoutes } from "./modules/board/boardRoutes.js"
+import { MssqlPostRepository } from "./modules/board/postRepository.mssql.js"
+import { PostService } from "./modules/board/postService.js"
+import { MssqlOperationLogRepository } from "./modules/logs/operationLogRepository.mssql.js"
 import { MssqlUserRepository } from "./modules/users/userRepository.mssql.js"
 import { UserService } from "./modules/users/userService.js"
 import { createUserRoutes } from "./modules/users/userRoutes.js"
@@ -44,9 +48,13 @@ app.get("/api/health/db", async (_req, res) => {
 const userRepository = new MssqlUserRepository(getPool)
 const authService = new AuthService(userRepository)
 const userService = new UserService(userRepository)
+const operationLogRepository = new MssqlOperationLogRepository(getPool)
+const postRepository = new MssqlPostRepository(getPool)
+const postService = new PostService(postRepository, operationLogRepository)
 
 app.use("/api/auth", createAuthRoutes(authService, userRepository))
 app.use("/api/admin/users", createUserRoutes(userService))
+app.use("/api/posts", createBoardRoutes(postService))
 
 app.use(errorHandler)
 
