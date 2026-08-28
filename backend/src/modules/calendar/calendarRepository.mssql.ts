@@ -57,6 +57,19 @@ export class MssqlEventRepository implements EventRepository {
     return result.recordset.map(toEvent)
   }
 
+  async listCompanyHolidaysInRange(from: string, to: string): Promise<CalendarEvent[]> {
+    const pool = await this.getPool()
+    const result = await pool
+      .request()
+      .input("from", from)
+      .input("to", to).query<EventRow>(`
+        SELECT * FROM calendar_event
+        WHERE event_type = 'company_holiday'
+          AND start_at <= @to AND end_at >= @from
+      `)
+    return result.recordset.map(toEvent)
+  }
+
   async findById(eventId: number): Promise<CalendarEvent | undefined> {
     const pool = await this.getPool()
     const result = await pool
@@ -67,7 +80,7 @@ export class MssqlEventRepository implements EventRepository {
     return row ? toEvent(row) : undefined
   }
 
-  async create(input: CreateEventInput): Promise<CalendarEvent> {
+  async create(input: CreateEventInput & { eventType: CalendarEventType }): Promise<CalendarEvent> {
     const pool = await this.getPool()
     const result = await pool
       .request()
@@ -78,10 +91,11 @@ export class MssqlEventRepository implements EventRepository {
       .input("visibility", input.visibility)
       .input("isHidden", input.isHidden)
       .input("isRecurring", input.isRecurring)
-      .input("recurrenceRule", input.isRecurring ? input.recurrenceRule : null).query<{ event_id: number }>(`
+      .input("recurrenceRule", input.isRecurring ? input.recurrenceRule : null)
+      .input("eventType", input.eventType).query<{ event_id: number }>(`
         INSERT INTO calendar_event (owner_id, title, start_at, end_at, visibility, is_hidden, is_recurring, recurrence_rule, event_type)
         OUTPUT inserted.event_id
-        VALUES (@ownerId, @title, @startAt, @endAt, @visibility, @isHidden, @isRecurring, @recurrenceRule, 'personal')
+        VALUES (@ownerId, @title, @startAt, @endAt, @visibility, @isHidden, @isRecurring, @recurrenceRule, @eventType)
       `)
     const created = await this.findById(result.recordset[0].event_id)
     if (!created) {

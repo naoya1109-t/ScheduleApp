@@ -24,6 +24,7 @@ export interface CreateEventInput {
   isHidden: boolean
   isRecurring: boolean
   recurrenceRule: RecurrenceRule
+  eventType?: CalendarEventType
 }
 
 export interface UpdateEventInput {
@@ -49,8 +50,9 @@ export interface VisibleOccurrence {
 
 export interface EventRepository {
   listByOwnerAndRange(ownerId: number, from: string, to: string): Promise<CalendarEvent[]>
+  listCompanyHolidaysInRange(from: string, to: string): Promise<CalendarEvent[]>
   findById(eventId: number): Promise<CalendarEvent | undefined>
-  create(input: CreateEventInput): Promise<CalendarEvent>
+  create(input: CreateEventInput & { eventType: CalendarEventType }): Promise<CalendarEvent>
   update(eventId: number, input: UpdateEventInput): Promise<CalendarEvent>
   delete(eventId: number): Promise<void>
 }

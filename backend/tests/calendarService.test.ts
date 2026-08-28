@@ -90,7 +90,7 @@ describe("CalendarService 公開対象・非表示のマスキングルール", 
     })
 
     await expect(
-      service.updateEvent(created.eventId, 2, { title: "改ざん" }),
+      service.updateEvent(created.eventId, 2, "general", { title: "改ざん" }),
     ).rejects.toThrow(HttpError)
   })
 
@@ -107,7 +107,7 @@ describe("CalendarService 公開対象・非表示のマスキングルール", 
       recurrenceRule: "none",
     })
 
-    await expect(service.deleteEvent(created.eventId, 2)).rejects.toThrow(HttpError)
+    await expect(service.deleteEvent(created.eventId, 2, "general")).rejects.toThrow(HttpError)
   })
 
   it("本人は公開対象・非表示設定を後から変更できる", async () => {
@@ -123,8 +123,89 @@ describe("CalendarService 公開対象・非表示のマスキングルール", 
       recurrenceRule: "none",
     })
 
-    await service.updateEvent(created.eventId, 1, { isHidden: true })
+    await service.updateEvent(created.eventId, 1, "general", { isHidden: true })
     const asOther = await service.listVisibleEvents(1, 2, RANGE_FROM, RANGE_TO)
     expect(asOther[0].isBusyOnly).toBe(true)
+  })
+})
+
+describe("CalendarService 会社休日", () => {
+  it("会社休日は誰でも登録でき、公開対象「全員」・非表示OFF・繰り返しなしに固定される", async () => {
+    const { repository, service } = setup()
+    await service.createEvent({
+      ownerId: 1,
+      title: "夏季休暇",
+      startAt: "2026-09-02T00:00:00.000Z",
+      endAt: "2026-09-02T23:59:59.000Z",
+      visibility: "self",
+      isHidden: true,
+      isRecurring: true,
+      recurrenceRule: "weekly",
+      eventType: "company_holiday",
+    })
+
+    const created = repository.events[0]
+    expect(created.visibility).toBe("all")
+    expect(created.isHidden).toBe(false)
+    expect(created.isRecurring).toBe(false)
+  })
+
+  it("会社休日は入力者本人でなくても管理者なら編集・削除できる", async () => {
+    const { service } = setup()
+    const created = await service.createEvent({
+      ownerId: 1,
+      title: "夏季休暇",
+      startAt: "2026-09-02T00:00:00.000Z",
+      endAt: "2026-09-02T23:59:59.000Z",
+      visibility: "all",
+      isHidden: false,
+      isRecurring: false,
+      recurrenceRule: "none",
+      eventType: "company_holiday",
+    })
+
+    await expect(
+      service.updateEvent(created.eventId, 2, "admin", { title: "夏季休暇(修正)" }),
+    ).resolves.not.toThrow()
+    await expect(service.deleteEvent(created.eventId, 2, "admin")).resolves.not.toThrow()
+  })
+
+  it("会社休日は入力者本人でも一般社員でもない他人からは編集・削除できない", async () => {
+    const { service } = setup()
+    const created = await service.createEvent({
+      ownerId: 1,
+      title: "夏季休暇",
+      startAt: "2026-09-02T00:00:00.000Z",
+      endAt: "2026-09-02T23:59:59.000Z",
+      visibility: "all",
+      isHidden: false,
+      isRecurring: false,
+      recurrenceRule: "none",
+      eventType: "company_holiday",
+    })
+
+    await expect(
+      service.updateEvent(created.eventId, 2, "general", { title: "改ざん" }),
+    ).rejects.toThrow(HttpError)
+  })
+
+  it("会社休日はlistCompanyHolidaysで誰にでも見える(非表示扱いにならない)", async () => {
+    const { service } = setup()
+    await service.createEvent({
+      ownerId: 1,
+      title: "夏季休暇",
+      startAt: "2026-09-02T00:00:00.000Z",
+      endAt: "2026-09-02T23:59:59.000Z",
+      visibility: "all",
+      isHidden: false,
+      isRecurring: false,
+      recurrenceRule: "none",
+      eventType: "company_holiday",
+    })
+
+    const holidays = await service.listCompanyHolidays(RANGE_FROM, RANGE_TO)
+    expect(holidays).toHaveLength(1)
+    expect(holidays[0].title).toBe("夏季休暇")
+    expect(holidays[0].isBusyOnly).toBe(false)
   })
 })

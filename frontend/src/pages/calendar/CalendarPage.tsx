@@ -3,19 +3,26 @@ import { ApiError } from "../../api/client"
 import {
   createEvent,
   deleteEvent,
+  listCompanyHolidays,
   listEvents,
   type EventVisibility,
   type RecurrenceRule,
   type VisibleOccurrence,
 } from "../../api/calendar"
+import { listHolidaysInRange, type Holiday } from "../../api/holidays"
 import { useAuth } from "../../context/AuthContext"
 
-function startOfWeekRange(): { from: string; to: string } {
+function rangeIso(): { from: string; to: string; fromDate: string; toDate: string } {
   const now = new Date()
   const from = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const to = new Date(from)
   to.setDate(to.getDate() + 14)
-  return { from: from.toISOString(), to: to.toISOString() }
+  return {
+    from: from.toISOString(),
+    to: to.toISOString(),
+    fromDate: from.toISOString().slice(0, 10),
+    toDate: to.toISOString().slice(0, 10),
+  }
 }
 
 const emptyForm = {
@@ -26,31 +33,54 @@ const emptyForm = {
   isHidden: false,
   isRecurring: false,
   recurrenceRule: "weekly" as RecurrenceRule,
+  isCompanyHoliday: false,
 }
+
+type TimelineItem =
+  | { kind: "event"; key: string; sortKey: string; occurrence: VisibleOccurrence }
+  | { kind: "holiday"; key: string; sortKey: string; label: string; name: string }
 
 export function CalendarPage() {
   const { user } = useAuth()
   const [events, setEvents] = useState<VisibleOccurrence[]>([])
+  const [companyHolidays, setCompanyHolidays] = useState<VisibleOccurrence[]>([])
+  const [holidays, setHolidays] = useState<Holiday[]>([])
   const [form, setForm] = useState(emptyForm)
   const [error, setError] = useState<string | null>(null)
 
   async function reload() {
     if (!user) return
-    const { from, to } = startOfWeekRange()
-    setEvents(await listEvents(user.userId, from, to))
+    const { from, to, fromDate, toDate } = rangeIso()
+    const [eventData, companyHolidayData, holidayData] = await Promise.all([
+      listEvents(user.userId, from, to),
+      listCompanyHolidays(from, to),
+      listHolidaysInRange(fromDate, toDate),
+    ])
+    setEvents(eventData)
+    setCompanyHolidays(companyHolidayData)
+    setHolidays(holidayData)
   }
 
   useEffect(() => {
+    if (!user) return
     let cancelled = false
-    async function load() {
-      if (!user) return
-      const { from, to } = startOfWeekRange()
-      const data = await listEvents(user.userId, from, to)
-      if (!cancelled) setEvents(data)
-    }
-    load().catch(() => {
-      if (!cancelled) setError("予定の取得に失敗しました")
-    })
+    const { from, to, fromDate, toDate } = rangeIso()
+
+    Promise.all([
+      listEvents(user.userId, from, to),
+      listCompanyHolidays(from, to),
+      listHolidaysInRange(fromDate, toDate),
+    ])
+      .then(([eventData, companyHolidayData, holidayData]) => {
+        if (cancelled) return
+        setEvents(eventData)
+        setCompanyHolidays(companyHolidayData)
+        setHolidays(holidayData)
+      })
+      .catch(() => {
+        if (!cancelled) setError("予定の取得に失敗しました")
+      })
+
     return () => {
       cancelled = true
     }
@@ -60,15 +90,24 @@ export function CalendarPage() {
     event.preventDefault()
     setError(null)
     try {
-      await createEvent({
-        title: form.title,
-        startAt: new Date(form.startAt).toISOString(),
-        endAt: new Date(form.endAt).toISOString(),
-        visibility: form.visibility,
-        isHidden: form.isHidden,
-        isRecurring: form.isRecurring,
-        recurrenceRule: form.recurrenceRule,
-      })
+      if (form.isCompanyHoliday) {
+        await createEvent({
+          title: form.title,
+          startAt: new Date(form.startAt).toISOString(),
+          endAt: new Date(form.endAt).toISOString(),
+          eventType: "company_holiday",
+        })
+      } else {
+        await createEvent({
+          title: form.title,
+          startAt: new Date(form.startAt).toISOString(),
+          endAt: new Date(form.endAt).toISOString(),
+          visibility: form.visibility,
+          isHidden: form.isHidden,
+          isRecurring: form.isRecurring,
+          recurrenceRule: form.recurrenceRule,
+        })
+      }
       setForm(emptyForm)
       await reload()
     } catch (err) {
@@ -80,6 +119,29 @@ export function CalendarPage() {
     await deleteEvent(eventId)
     await reload()
   }
+
+  const timeline: TimelineItem[] = [
+    ...holidays.map((holiday) => ({
+      kind: "holiday" as const,
+      key: `holiday-${holiday.holidayId}`,
+      sortKey: `${holiday.holidayDate}T00:00:00.000Z`,
+      label: "祝日",
+      name: holiday.name,
+    })),
+    ...companyHolidays.map((occurrence) => ({
+      kind: "holiday" as const,
+      key: `company-${occurrence.eventId}`,
+      sortKey: occurrence.startAt,
+      label: "会社休日",
+      name: occurrence.title ?? "",
+    })),
+    ...events.map((occurrence) => ({
+      kind: "event" as const,
+      key: `event-${occurrence.eventId}-${occurrence.startAt}`,
+      sortKey: occurrence.startAt,
+      occurrence,
+    })),
+  ].sort((a, b) => a.sortKey.localeCompare(b.sortKey))
 
   return (
     <div className="mx-auto max-w-[800px] p-8">
@@ -120,73 +182,100 @@ export function CalendarPage() {
             />
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-4">
-          <div>
-            <label className="mb-1 block text-[11.5px] font-bold text-text-soft">公開対象</label>
-            <select
-              className="rounded-md border border-border px-3 py-2 text-sm"
-              value={form.visibility}
-              onChange={(e) => setForm({ ...form, visibility: e.target.value as EventVisibility })}
-            >
-              <option value="all">全員</option>
-              <option value="self">自分</option>
-            </select>
+
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={form.isCompanyHoliday}
+            onChange={(e) => setForm({ ...form, isCompanyHoliday: e.target.checked })}
+          />
+          会社休日として登録する(公開対象「全員」で全社員に共有されます)
+        </label>
+
+        {!form.isCompanyHoliday && (
+          <div className="flex flex-wrap items-center gap-4">
+            <div>
+              <label className="mb-1 block text-[11.5px] font-bold text-text-soft">公開対象</label>
+              <select
+                className="rounded-md border border-border px-3 py-2 text-sm"
+                value={form.visibility}
+                onChange={(e) => setForm({ ...form, visibility: e.target.value as EventVisibility })}
+              >
+                <option value="all">全員</option>
+                <option value="self">自分</option>
+              </select>
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={form.isHidden}
+                onChange={(e) => setForm({ ...form, isHidden: e.target.checked })}
+              />
+              非表示(「予定あり」とだけ見せる)
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={form.isRecurring}
+                onChange={(e) => setForm({ ...form, isRecurring: e.target.checked })}
+              />
+              繰り返し
+            </label>
+            {form.isRecurring && (
+              <select
+                className="rounded-md border border-border px-3 py-2 text-sm"
+                value={form.recurrenceRule}
+                onChange={(e) => setForm({ ...form, recurrenceRule: e.target.value as RecurrenceRule })}
+              >
+                <option value="daily">毎日</option>
+                <option value="weekly">毎週</option>
+                <option value="monthly">毎月</option>
+              </select>
+            )}
           </div>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={form.isHidden}
-              onChange={(e) => setForm({ ...form, isHidden: e.target.checked })}
-            />
-            非表示(「予定あり」とだけ見せる)
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={form.isRecurring}
-              onChange={(e) => setForm({ ...form, isRecurring: e.target.checked })}
-            />
-            繰り返し
-          </label>
-          {form.isRecurring && (
-            <select
-              className="rounded-md border border-border px-3 py-2 text-sm"
-              value={form.recurrenceRule}
-              onChange={(e) => setForm({ ...form, recurrenceRule: e.target.value as RecurrenceRule })}
-            >
-              <option value="daily">毎日</option>
-              <option value="weekly">毎週</option>
-              <option value="monthly">毎月</option>
-            </select>
-          )}
-        </div>
+        )}
+
         {error && <p className="text-sm text-coral">{error}</p>}
         <button type="submit" className="rounded-md bg-indigo py-2 text-sm font-bold text-white">
-          予定を登録
+          登録
         </button>
       </form>
 
       <div className="flex flex-col gap-2">
-        {events.map((occurrence) => (
-          <div
-            key={`${occurrence.eventId}-${occurrence.startAt}`}
-            className="flex items-center justify-between rounded-md border border-border bg-surface px-4 py-3 text-sm"
-          >
-            <div>
-              <span className="font-bold">{occurrence.isBusyOnly ? "予定あり" : occurrence.title}</span>
-              <span className="ml-3 text-text-soft">
-                {new Date(occurrence.startAt).toLocaleString("ja-JP")} 〜{" "}
-                {new Date(occurrence.endAt).toLocaleString("ja-JP")}
+        {timeline.map((item) =>
+          item.kind === "holiday" ? (
+            <div
+              key={item.key}
+              className="flex items-center gap-3 rounded-md border border-coral-soft bg-coral-soft px-4 py-3 text-sm"
+            >
+              <span className="rounded bg-coral px-1.5 py-0.5 text-[10px] font-bold text-white">
+                {item.label}
               </span>
+              <span className="font-bold">{item.name}</span>
             </div>
-            {occurrence.isOwnEvent && (
-              <button onClick={() => handleDelete(occurrence.eventId)} className="text-coral">
-                削除
-              </button>
-            )}
-          </div>
-        ))}
-        {events.length === 0 && <p className="text-text-soft">予定はまだありません。</p>}
+          ) : (
+            <div
+              key={item.key}
+              className="flex items-center justify-between rounded-md border border-border bg-surface px-4 py-3 text-sm"
+            >
+              <div>
+                <span className="font-bold">
+                  {item.occurrence.isBusyOnly ? "予定あり" : item.occurrence.title}
+                </span>
+                <span className="ml-3 text-text-soft">
+                  {new Date(item.occurrence.startAt).toLocaleString("ja-JP")} 〜{" "}
+                  {new Date(item.occurrence.endAt).toLocaleString("ja-JP")}
+                </span>
+              </div>
+              {item.occurrence.isOwnEvent && (
+                <button onClick={() => handleDelete(item.occurrence.eventId)} className="text-coral">
+                  削除
+                </button>
+              )}
+            </div>
+          ),
+        )}
+        {timeline.length === 0 && <p className="text-text-soft">予定はまだありません。</p>}
       </div>
     </div>
   )

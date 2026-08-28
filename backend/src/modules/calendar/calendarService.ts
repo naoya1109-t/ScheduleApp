@@ -1,32 +1,56 @@
 import { HttpError } from "../../middleware/httpError.js"
 import { expandOccurrences } from "./occurrences.js"
 import type {
+  CalendarEvent,
   CreateEventInput,
   EventRepository,
   UpdateEventInput,
   VisibleOccurrence,
 } from "./types.js"
 
+export type CallerRole = "admin" | "general"
+
+function assertCanModify(event: CalendarEvent, callerId: number, callerRole: CallerRole): void {
+  const isOwner = event.ownerId === callerId
+  const isAdminOverridingCompanyHoliday = event.eventType === "company_holiday" && callerRole === "admin"
+  if (!isOwner && !isAdminOverridingCompanyHoliday) {
+    throw new HttpError(403, "この予定を変更する権限がありません")
+  }
+}
+
 export class CalendarService {
   constructor(private readonly repository: EventRepository) {}
 
   async createEvent(input: CreateEventInput) {
-    return this.repository.create(input)
+    if (input.eventType === "company_holiday") {
+      // 会社休日は要件上「全員」向け・単発・通常表示で固定する(要件3-2)
+      return this.repository.create({
+        ...input,
+        eventType: "company_holiday",
+        visibility: "all",
+        isHidden: false,
+        isRecurring: false,
+        recurrenceRule: "none",
+      })
+    }
+    return this.repository.create({ ...input, eventType: "personal" })
   }
 
-  async updateEvent(eventId: number, ownerId: number, input: UpdateEventInput) {
+  async updateEvent(eventId: number, callerId: number, callerRole: CallerRole, input: UpdateEventInput) {
     const event = await this.repository.findById(eventId)
-    if (!event || event.ownerId !== ownerId) {
-      throw new HttpError(403, "この予定を編集する権限がありません")
+    if (!event) {
+      throw new HttpError(404, "予定が見つかりません")
     }
+    assertCanModify(event, callerId, callerRole)
     return this.repository.update(eventId, input)
   }
 
-  async deleteEvent(eventId: number, ownerId: number) {
+  async deleteEvent(eventId: number, callerId: number, callerRole: CallerRole) {
     const event = await this.repository.findById(eventId)
-    if (!event || event.ownerId !== ownerId) {
-      throw new HttpError(403, "この予定を削除する権限がありません")
+    if (!event) {
+      throw new HttpError(404, "予定が見つかりません")
     }
+    assertCanModify(event, callerId, callerRole)
     await this.repository.delete(eventId)
   }
 
@@ -66,5 +90,18 @@ export class CalendarService {
       }
     }
     return result.sort((a, b) => a.startAt.localeCompare(b.startAt))
+  }
+
+  async listCompanyHolidays(from: string, to: string): Promise<VisibleOccurrence[]> {
+    const events = await this.repository.listCompanyHolidaysInRange(from, to)
+    return events.map((event) => ({
+      eventId: event.eventId,
+      ownerId: event.ownerId,
+      startAt: event.startAt,
+      endAt: event.endAt,
+      isOwnEvent: false,
+      isBusyOnly: false,
+      title: event.title,
+    }))
   }
 }

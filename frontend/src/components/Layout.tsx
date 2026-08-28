@@ -8,6 +8,11 @@ const NAV_ITEMS = [
   { to: "/board", label: "掲示板" },
 ]
 
+const ADMIN_NAV_ITEMS = [
+  { to: "/admin/users", label: "利用者管理" },
+  { to: "/admin/holidays", label: "祝日設定" },
+]
+
 export function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth()
   const location = useLocation()
@@ -31,18 +36,20 @@ export function Layout({ children }: { children: ReactNode }) {
                 {item.label}
               </Link>
             ))}
-            {user?.role === "admin" && (
-              <Link
-                to="/admin/users"
-                className={
-                  location.pathname === "/admin/users"
-                    ? "border-b-2 border-indigo pb-1 text-sm font-bold text-indigo"
-                    : "pb-1 text-sm text-text-soft"
-                }
-              >
-                管理設定
-              </Link>
-            )}
+            {user?.role === "admin" &&
+              ADMIN_NAV_ITEMS.map((item) => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className={
+                    location.pathname === item.to
+                      ? "border-b-2 border-indigo pb-1 text-sm font-bold text-indigo"
+                      : "pb-1 text-sm text-text-soft"
+                  }
+                >
+                  {item.label}
+                </Link>
+              ))}
           </nav>
         </div>
         <div className="flex items-center gap-4 text-sm">

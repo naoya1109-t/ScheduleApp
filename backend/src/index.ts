@@ -12,6 +12,9 @@ import { PostService } from "./modules/board/postService.js"
 import { createCalendarRoutes } from "./modules/calendar/calendarRoutes.js"
 import { CalendarService } from "./modules/calendar/calendarService.js"
 import { MssqlEventRepository } from "./modules/calendar/calendarRepository.mssql.js"
+import { createHolidayRoutes } from "./modules/holidays/holidayRoutes.js"
+import { HolidayService } from "./modules/holidays/holidayService.js"
+import { MssqlHolidayRepository } from "./modules/holidays/holidayRepository.mssql.js"
 import { MssqlOperationLogRepository } from "./modules/logs/operationLogRepository.mssql.js"
 import { MssqlUserRepository } from "./modules/users/userRepository.mssql.js"
 import { UserService } from "./modules/users/userService.js"
@@ -56,11 +59,14 @@ const postRepository = new MssqlPostRepository(getPool)
 const postService = new PostService(postRepository, operationLogRepository)
 const eventRepository = new MssqlEventRepository(getPool)
 const calendarService = new CalendarService(eventRepository)
+const holidayRepository = new MssqlHolidayRepository(getPool)
+const holidayService = new HolidayService(holidayRepository)
 
 app.use("/api/auth", createAuthRoutes(authService, userRepository))
 app.use("/api/admin/users", createUserRoutes(userService))
 app.use("/api/posts", createBoardRoutes(postService))
 app.use("/api/calendar", createCalendarRoutes(calendarService))
+app.use("/api/holidays", createHolidayRoutes(holidayService))
 
 app.use(errorHandler)
 

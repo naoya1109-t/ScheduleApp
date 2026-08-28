@@ -4,6 +4,7 @@ import { AuthProvider } from "./context/AuthContext"
 import { RequireAuth } from "./context/RequireAuth"
 import { LoginPage } from "./pages/login/LoginPage"
 import { UsersPage } from "./pages/admin/users/UsersPage"
+import { HolidaysPage } from "./pages/admin/holidays/HolidaysPage"
 import { BoardListPage } from "./pages/board/BoardListPage"
 import { CalendarPage } from "./pages/calendar/CalendarPage"
 import { NewPostPage } from "./pages/board/NewPostPage"
@@ -93,6 +94,16 @@ function App() {
             <RequireAuth adminOnly>
               <Layout>
                 <UsersPage />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/holidays"
+          element={
+            <RequireAuth adminOnly>
+              <Layout>
+                <HolidaysPage />
               </Layout>
             </RequireAuth>
           }
