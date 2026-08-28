@@ -7,21 +7,11 @@ import { UsersPage } from "./pages/admin/users/UsersPage"
 import { HolidaysPage } from "./pages/admin/holidays/HolidaysPage"
 import { BoardListPage } from "./pages/board/BoardListPage"
 import { CalendarPage } from "./pages/calendar/CalendarPage"
+import { MonthViewPage } from "./pages/calendar/MonthViewPage"
 import { NewPostPage } from "./pages/board/NewPostPage"
 import { PostDetailPage } from "./pages/board/PostDetailPage"
 import { PostPermalinkRedirect } from "./pages/board/PostPermalinkRedirect"
-
-function TopPage() {
-  return (
-    <div className="mx-auto max-w-[1440px] p-8">
-      <div className="rounded-[14px] border border-border bg-surface p-6 shadow-sm">
-        <p className="text-text-soft">
-          トップ画面は準備中です。docs/mockups/casemax_mockup_top.html を参考に実装していきます。
-        </p>
-      </div>
-    </div>
-  )
-}
+import { TopPage } from "./pages/top/TopPage"
 
 function App() {
   return (
@@ -34,6 +24,16 @@ function App() {
             <RequireAuth>
               <Layout>
                 <TopPage />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/calendar/month/:userId"
+          element={
+            <RequireAuth>
+              <Layout>
+                <MonthViewPage />
               </Layout>
             </RequireAuth>
           }

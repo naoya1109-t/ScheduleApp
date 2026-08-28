@@ -15,7 +15,12 @@ import { MssqlEventRepository } from "./modules/calendar/calendarRepository.mssq
 import { createHolidayRoutes } from "./modules/holidays/holidayRoutes.js"
 import { HolidayService } from "./modules/holidays/holidayService.js"
 import { MssqlHolidayRepository } from "./modules/holidays/holidayRepository.mssql.js"
+import { createGroupRoutes } from "./modules/groups/groupRoutes.js"
+import { MssqlGroupRepository } from "./modules/groups/groupRepository.mssql.js"
 import { MssqlOperationLogRepository } from "./modules/logs/operationLogRepository.mssql.js"
+import { createTopPageRoutes } from "./modules/topPage/topPageRoutes.js"
+import { TopPageService } from "./modules/topPage/topPageService.js"
+import { MssqlTopPageSettingsRepository } from "./modules/topPage/topPageSettingsRepository.mssql.js"
 import { MssqlUserRepository } from "./modules/users/userRepository.mssql.js"
 import { UserService } from "./modules/users/userService.js"
 import { createUserRoutes } from "./modules/users/userRoutes.js"
@@ -61,12 +66,17 @@ const eventRepository = new MssqlEventRepository(getPool)
 const calendarService = new CalendarService(eventRepository)
 const holidayRepository = new MssqlHolidayRepository(getPool)
 const holidayService = new HolidayService(holidayRepository)
+const groupRepository = new MssqlGroupRepository(getPool)
+const topPageSettingsRepository = new MssqlTopPageSettingsRepository(getPool)
+const topPageService = new TopPageService(calendarService, groupRepository, userRepository, topPageSettingsRepository)
 
 app.use("/api/auth", createAuthRoutes(authService, userRepository))
 app.use("/api/admin/users", createUserRoutes(userService))
 app.use("/api/posts", createBoardRoutes(postService))
 app.use("/api/calendar", createCalendarRoutes(calendarService))
 app.use("/api/holidays", createHolidayRoutes(holidayService))
+app.use("/api/groups", createGroupRoutes(groupRepository))
+app.use("/api/top-page", createTopPageRoutes(topPageService))
 
 app.use(errorHandler)
 
