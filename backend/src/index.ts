@@ -18,6 +18,10 @@ import { MssqlHolidayRepository } from "./modules/holidays/holidayRepository.mss
 import { createGroupRoutes } from "./modules/groups/groupRoutes.js"
 import { MssqlGroupRepository } from "./modules/groups/groupRepository.mssql.js"
 import { MssqlOperationLogRepository } from "./modules/logs/operationLogRepository.mssql.js"
+import { createRoomRoutes } from "./modules/rooms/roomRoutes.js"
+import { RoomService } from "./modules/rooms/roomService.js"
+import { MssqlRoomRepository } from "./modules/rooms/roomRepository.mssql.js"
+import { MssqlReservationRepository } from "./modules/rooms/reservationRepository.mssql.js"
 import { createTopPageRoutes } from "./modules/topPage/topPageRoutes.js"
 import { TopPageService } from "./modules/topPage/topPageService.js"
 import { MssqlTopPageSettingsRepository } from "./modules/topPage/topPageSettingsRepository.mssql.js"
@@ -69,6 +73,9 @@ const holidayService = new HolidayService(holidayRepository)
 const groupRepository = new MssqlGroupRepository(getPool)
 const topPageSettingsRepository = new MssqlTopPageSettingsRepository(getPool)
 const topPageService = new TopPageService(calendarService, groupRepository, userRepository, topPageSettingsRepository)
+const roomRepository = new MssqlRoomRepository(getPool)
+const reservationRepository = new MssqlReservationRepository(getPool)
+const roomService = new RoomService(roomRepository, reservationRepository, eventRepository)
 
 app.use("/api/auth", createAuthRoutes(authService, userRepository))
 app.use("/api/admin/users", createUserRoutes(userService))
@@ -77,6 +84,7 @@ app.use("/api/calendar", createCalendarRoutes(calendarService))
 app.use("/api/holidays", createHolidayRoutes(holidayService))
 app.use("/api/groups", createGroupRoutes(groupRepository))
 app.use("/api/top-page", createTopPageRoutes(topPageService))
+app.use("/api/rooms", createRoomRoutes(roomService))
 
 app.use(errorHandler)
 

@@ -11,6 +11,7 @@ import { MonthViewPage } from "./pages/calendar/MonthViewPage"
 import { NewPostPage } from "./pages/board/NewPostPage"
 import { PostDetailPage } from "./pages/board/PostDetailPage"
 import { PostPermalinkRedirect } from "./pages/board/PostPermalinkRedirect"
+import { RoomsPage } from "./pages/rooms/RoomsPage"
 import { TopPage } from "./pages/top/TopPage"
 
 function App() {
@@ -44,6 +45,16 @@ function App() {
             <RequireAuth>
               <Layout>
                 <CalendarPage />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/rooms"
+          element={
+            <RequireAuth>
+              <Layout>
+                <RoomsPage />
               </Layout>
             </RequireAuth>
           }

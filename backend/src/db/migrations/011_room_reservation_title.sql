@@ -1,0 +1,1 @@
+ALTER TABLE room_reservation ADD title NVARCHAR(200) NOT NULL DEFAULT '';
