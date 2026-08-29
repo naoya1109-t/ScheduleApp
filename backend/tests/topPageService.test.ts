@@ -30,6 +30,7 @@ describe("TopPageService", () => {
       employeeNo: null,
       role: "general",
       status: "active",
+      jobTitleId: null,
     })
 
     const rows = await service.getWeekGantt(self.userId, null, RANGE_FROM, RANGE_TO)
@@ -48,6 +49,7 @@ describe("TopPageService", () => {
       employeeNo: null,
       role: "general",
       status: "active",
+      jobTitleId: null,
     })
     const memberB = userRepository.seed({
       loginId: "b",
@@ -57,6 +59,7 @@ describe("TopPageService", () => {
       employeeNo: null,
       role: "general",
       status: "active",
+      jobTitleId: null,
     })
     const memberA = userRepository.seed({
       loginId: "a",
@@ -66,6 +69,7 @@ describe("TopPageService", () => {
       employeeNo: null,
       role: "general",
       status: "active",
+      jobTitleId: null,
     })
     groupRepository.addGroup({ groupId: 1, name: "営業部" })
     groupRepository.seedMember(1, self.userId, self.name)
@@ -90,6 +94,7 @@ describe("TopPageService", () => {
       employeeNo: null,
       role: "general",
       status: "active",
+      jobTitleId: null,
     })
     groupRepository.addGroup({ groupId: 1, name: "営業部" })
     groupRepository.seedMember(1, self.userId, self.name, 1)
@@ -108,6 +113,7 @@ describe("TopPageService", () => {
       employeeNo: null,
       role: "general",
       status: "active",
+      jobTitleId: null,
     })
     const member = userRepository.seed({
       loginId: "b",
@@ -117,6 +123,7 @@ describe("TopPageService", () => {
       employeeNo: null,
       role: "general",
       status: "active",
+      jobTitleId: null,
     })
     groupRepository.addGroup({ groupId: 1, name: "営業部" })
     groupRepository.seedMember(1, self.userId, self.name)

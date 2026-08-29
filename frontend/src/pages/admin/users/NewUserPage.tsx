@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react"
 import { useNavigate } from "react-router-dom"
 import { ApiError } from "../../../api/client"
 import { listGroups, type Group } from "../../../api/groups"
+import { listJobTitles, type JobTitle } from "../../../api/jobTitles"
 import { createUser, type UserRole } from "../../../api/users"
 
 const emptyForm = {
@@ -11,6 +12,7 @@ const emptyForm = {
   email: "",
   employeeNo: "",
   role: "general" as UserRole,
+  jobTitleId: "",
 }
 
 export function NewUserPage() {
@@ -18,11 +20,13 @@ export function NewUserPage() {
   const [form, setForm] = useState(emptyForm)
   const [groups, setGroups] = useState<Group[]>([])
   const [groupIds, setGroupIds] = useState<number[]>([])
+  const [jobTitles, setJobTitles] = useState<JobTitle[]>([])
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     listGroups().then(setGroups)
+    listJobTitles().then(setJobTitles)
   }, [])
 
   function toggleGroup(groupId: number) {
@@ -36,7 +40,11 @@ export function NewUserPage() {
     setError(null)
     setSubmitting(true)
     try {
-      await createUser({ ...form, groupIds })
+      await createUser({
+        ...form,
+        groupIds,
+        jobTitleId: form.jobTitleId ? Number(form.jobTitleId) : null,
+      })
       navigate("/admin/users")
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "利用者の作成に失敗しました")
@@ -106,6 +114,21 @@ export function NewUserPage() {
           >
             <option value="general">一般社員</option>
             <option value="admin">管理者</option>
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-[11.5px] font-bold text-text-soft">役職</label>
+          <select
+            className="w-full rounded-md border border-border px-3 py-2 text-sm"
+            value={form.jobTitleId}
+            onChange={(e) => setForm({ ...form, jobTitleId: e.target.value })}
+          >
+            <option value="">未設定</option>
+            {jobTitles.map((jobTitle) => (
+              <option key={jobTitle.jobTitleId} value={jobTitle.jobTitleId}>
+                {jobTitle.name}
+              </option>
+            ))}
           </select>
         </div>
         <div>

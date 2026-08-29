@@ -6,6 +6,7 @@ import { FakeFolderRepository } from "./fakes/fakeFolderRepository.js"
 import { FakeGroupRepository } from "./fakes/fakeGroupRepository.js"
 import { FakeHolidayRepository } from "./fakes/fakeHolidayRepository.js"
 import { FakeIncidentReportRepository } from "./fakes/fakeIncidentReportRepository.js"
+import { FakeJobTitleRepository } from "./fakes/fakeJobTitleRepository.js"
 import { FakeOperationLogRepository } from "./fakes/fakeOperationLogRepository.js"
 import { FakePostRepository } from "./fakes/fakePostRepository.js"
 import { FakeReservationRepository } from "./fakes/fakeReservationRepository.js"
@@ -23,6 +24,7 @@ function isoAt(daysFromToday: number, hour: number, minute: number): string {
 export async function seedDevData() {
   const userRepository = new FakeUserRepository()
   const groupRepository = new FakeGroupRepository()
+  const jobTitleRepository = new FakeJobTitleRepository()
   const eventRepository = new FakeEventRepository()
   const postRepository = new FakePostRepository()
   const holidayRepository = new FakeHolidayRepository()
@@ -37,6 +39,10 @@ export async function seedDevData() {
 
   const passwordHash = await bcrypt.hash("password123", 4)
 
+  const managerTitle = await jobTitleRepository.create({ name: "部長" })
+  const leaderTitle = await jobTitleRepository.create({ name: "主任" })
+  await jobTitleRepository.create({ name: "一般" })
+
   const admin = userRepository.seed({
     loginId: "admin",
     passwordHash,
@@ -45,6 +51,7 @@ export async function seedDevData() {
     employeeNo: "0001",
     role: "admin",
     status: "active",
+    jobTitleId: managerTitle.jobTitleId,
   })
   const staffA = userRepository.seed({
     loginId: "yamada",
@@ -54,6 +61,7 @@ export async function seedDevData() {
     employeeNo: "0002",
     role: "general",
     status: "active",
+    jobTitleId: leaderTitle.jobTitleId,
   })
   const staffB = userRepository.seed({
     loginId: "sato",
@@ -63,6 +71,7 @@ export async function seedDevData() {
     employeeNo: "0003",
     role: "general",
     status: "active",
+    jobTitleId: null,
   })
   const staffC = userRepository.seed({
     loginId: "suzuki",
@@ -72,6 +81,7 @@ export async function seedDevData() {
     employeeNo: "0004",
     role: "general",
     status: "active",
+    jobTitleId: null,
   })
 
   postRepository.setAuthorName(admin.userId, admin.name)
@@ -206,9 +216,12 @@ export async function seedDevData() {
     { customerCode: "C002", customerName: "株式会社サンプル商事", salesRepId: staffB.userId },
   )
 
+  jobTitleRepository.setUserRepository(userRepository)
+
   return {
     userRepository,
     groupRepository,
+    jobTitleRepository,
     eventRepository,
     postRepository,
     holidayRepository,

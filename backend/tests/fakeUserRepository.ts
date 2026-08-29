@@ -41,6 +41,7 @@ export class FakeUserRepository implements UserRepository {
     employeeNo: string | null
     role: User["role"]
     groupIds: number[]
+    jobTitleId: number | null
   }): Promise<UserSummary> {
     const created = this.seed({
       loginId: input.loginId,
@@ -50,6 +51,7 @@ export class FakeUserRepository implements UserRepository {
       employeeNo: input.employeeNo,
       role: input.role,
       status: "active",
+      jobTitleId: input.jobTitleId,
     })
     return toSummary(created)
   }
@@ -63,6 +65,7 @@ export class FakeUserRepository implements UserRepository {
     if (input.email !== undefined) user.email = input.email
     if (input.employeeNo !== undefined) user.employeeNo = input.employeeNo
     if (input.role !== undefined) user.role = input.role
+    if (input.jobTitleId !== undefined) user.jobTitleId = input.jobTitleId
     return toSummary(user)
   }
 

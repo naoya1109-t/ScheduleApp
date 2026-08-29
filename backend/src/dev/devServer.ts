@@ -15,6 +15,7 @@ import { createGroupRoutes } from "../modules/groups/groupRoutes.js"
 import { createHolidayRoutes } from "../modules/holidays/holidayRoutes.js"
 import { HolidayService } from "../modules/holidays/holidayService.js"
 import { HttpJapaneseHolidaySource } from "../modules/holidays/japaneseHolidaySource.js"
+import { createJobTitleRoutes } from "../modules/jobTitles/jobTitleRoutes.js"
 import { createIncidentReportRoutes } from "../modules/incidentReports/incidentReportRoutes.js"
 import { IncidentReportService } from "../modules/incidentReports/incidentReportService.js"
 import { createMeetingFinderRoutes } from "../modules/meetingFinder/meetingFinderRoutes.js"
@@ -34,6 +35,7 @@ async function main() {
   const {
     userRepository,
     groupRepository,
+    jobTitleRepository,
     eventRepository,
     postRepository,
     holidayRepository,
@@ -86,6 +88,7 @@ async function main() {
   app.use("/api/calendar", createCalendarRoutes(calendarService))
   app.use("/api/holidays", createHolidayRoutes(holidayService))
   app.use("/api/groups", createGroupRoutes(groupRepository))
+  app.use("/api/job-titles", createJobTitleRoutes(jobTitleRepository))
   app.use("/api/top-page", createTopPageRoutes(topPageService))
   app.use("/api/rooms", createRoomRoutes(roomService))
   app.use("/api/files", createFileRoutes(fileService, "./storage"))

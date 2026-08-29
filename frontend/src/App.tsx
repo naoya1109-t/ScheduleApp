@@ -28,6 +28,8 @@ import { RoomsAdminPage } from "./pages/admin/rooms/RoomsAdminPage"
 import { NewRoomPage } from "./pages/admin/rooms/NewRoomPage"
 import { GroupsAdminPage } from "./pages/admin/groups/GroupsAdminPage"
 import { NewGroupPage } from "./pages/admin/groups/NewGroupPage"
+import { JobTitlesAdminPage } from "./pages/admin/jobTitles/JobTitlesAdminPage"
+import { NewJobTitlePage } from "./pages/admin/jobTitles/NewJobTitlePage"
 
 function App() {
   return (
@@ -280,6 +282,26 @@ function App() {
             <RequireAuth adminOnly>
               <Layout>
                 <NewGroupPage />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/job-titles"
+          element={
+            <RequireAuth adminOnly>
+              <Layout>
+                <JobTitlesAdminPage />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/job-titles/new"
+          element={
+            <RequireAuth adminOnly>
+              <Layout>
+                <NewJobTitlePage />
               </Layout>
             </RequireAuth>
           }

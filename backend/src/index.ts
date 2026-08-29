@@ -18,6 +18,8 @@ import { MssqlHolidayRepository } from "./modules/holidays/holidayRepository.mss
 import { HttpJapaneseHolidaySource } from "./modules/holidays/japaneseHolidaySource.js"
 import { createGroupRoutes } from "./modules/groups/groupRoutes.js"
 import { MssqlGroupRepository } from "./modules/groups/groupRepository.mssql.js"
+import { createJobTitleRoutes } from "./modules/jobTitles/jobTitleRoutes.js"
+import { MssqlJobTitleRepository } from "./modules/jobTitles/jobTitleRepository.mssql.js"
 import { MssqlOperationLogRepository } from "./modules/logs/operationLogRepository.mssql.js"
 import { createFileRoutes } from "./modules/files/fileRoutes.js"
 import { FileService } from "./modules/files/fileService.js"
@@ -83,6 +85,7 @@ const calendarService = new CalendarService(eventRepository)
 const holidayRepository = new MssqlHolidayRepository(getPool)
 const holidayService = new HolidayService(holidayRepository, new HttpJapaneseHolidaySource())
 const groupRepository = new MssqlGroupRepository(getPool)
+const jobTitleRepository = new MssqlJobTitleRepository(getPool)
 const topPageSettingsRepository = new MssqlTopPageSettingsRepository(getPool)
 const topPageService = new TopPageService(calendarService, groupRepository, userRepository, topPageSettingsRepository)
 const roomRepository = new MssqlRoomRepository(getPool)
@@ -107,6 +110,7 @@ app.use("/api/posts", createBoardRoutes(postService, env.storageDir))
 app.use("/api/calendar", createCalendarRoutes(calendarService))
 app.use("/api/holidays", createHolidayRoutes(holidayService))
 app.use("/api/groups", createGroupRoutes(groupRepository))
+app.use("/api/job-titles", createJobTitleRoutes(jobTitleRepository))
 app.use("/api/top-page", createTopPageRoutes(topPageService))
 app.use("/api/rooms", createRoomRoutes(roomService))
 app.use("/api/files", createFileRoutes(fileService, env.storageDir))

@@ -10,6 +10,7 @@ interface UserRow {
   employee_no: string | null
   role: UserRole
   status: UserStatus
+  job_title_id: number | null
 }
 
 function toUser(row: UserRow): User {
@@ -22,6 +23,7 @@ function toUser(row: UserRow): User {
     employeeNo: row.employee_no,
     role: row.role,
     status: row.status,
+    jobTitleId: row.job_title_id,
   }
 }
 
@@ -67,6 +69,7 @@ export class MssqlUserRepository implements UserRepository {
     employeeNo: string | null
     role: UserRole
     groupIds: number[]
+    jobTitleId: number | null
   }): Promise<UserSummary> {
     const pool = await this.getPool()
     const transaction = pool.transaction()
@@ -79,10 +82,11 @@ export class MssqlUserRepository implements UserRepository {
         .input("name", input.name)
         .input("email", input.email)
         .input("employeeNo", input.employeeNo)
-        .input("role", input.role).query<{ user_id: number }>(`
-          INSERT INTO app_user (login_id, password_hash, name, email, employee_no, role)
+        .input("role", input.role)
+        .input("jobTitleId", input.jobTitleId).query<{ user_id: number }>(`
+          INSERT INTO app_user (login_id, password_hash, name, email, employee_no, role, job_title_id)
           OUTPUT inserted.user_id
-          VALUES (@loginId, @passwordHash, @name, @email, @employeeNo, @role)
+          VALUES (@loginId, @passwordHash, @name, @email, @employeeNo, @role, @jobTitleId)
         `)
       const userId = insertResult.recordset[0].user_id
 
@@ -128,6 +132,10 @@ export class MssqlUserRepository implements UserRepository {
       if (input.role !== undefined) {
         request.input("role", input.role)
         assignments.push("role = @role")
+      }
+      if (input.jobTitleId !== undefined) {
+        request.input("jobTitleId", input.jobTitleId)
+        assignments.push("job_title_id = @jobTitleId")
       }
       if (assignments.length > 0) {
         await request.query(`UPDATE app_user SET ${assignments.join(", ")} WHERE user_id = @userId`)

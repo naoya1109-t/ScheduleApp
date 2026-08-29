@@ -44,6 +44,10 @@ export class FakeUserRepository implements UserRepository {
     return created
   }
 
+  listAllForReference(): User[] {
+    return this.users
+  }
+
   async findByLoginId(loginId: string): Promise<User | undefined> {
     return this.users.find((user) => user.loginId === loginId)
   }
@@ -64,6 +68,7 @@ export class FakeUserRepository implements UserRepository {
     employeeNo: string | null
     role: User["role"]
     groupIds: number[]
+    jobTitleId: number | null
   }): Promise<UserSummary> {
     const created = this.seed({
       loginId: input.loginId,
@@ -73,6 +78,7 @@ export class FakeUserRepository implements UserRepository {
       employeeNo: input.employeeNo,
       role: input.role,
       status: "active",
+      jobTitleId: input.jobTitleId,
     })
     await this.syncGroups(created.userId, created.name, input.groupIds)
     return toSummary(created)
@@ -87,6 +93,7 @@ export class FakeUserRepository implements UserRepository {
     if (input.email !== undefined) user.email = input.email
     if (input.employeeNo !== undefined) user.employeeNo = input.employeeNo
     if (input.role !== undefined) user.role = input.role
+    if (input.jobTitleId !== undefined) user.jobTitleId = input.jobTitleId
     if (input.groupIds !== undefined) {
       await this.syncGroups(userId, user.name, input.groupIds)
     }

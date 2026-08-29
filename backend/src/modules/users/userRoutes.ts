@@ -20,7 +20,7 @@ export function createUserRoutes(userService: UserService): Router {
   router.post(
     "/",
     asyncHandler(async (req, res) => {
-      const { loginId, password, name, email, employeeNo, role, groupIds } = req.body
+      const { loginId, password, name, email, employeeNo, role, groupIds, jobTitleId } = req.body
       if (!loginId || !password || !name || !role) {
         res.status(400).json({ message: "loginId, password, name, role は必須です" })
         return
@@ -33,6 +33,7 @@ export function createUserRoutes(userService: UserService): Router {
         employeeNo,
         role,
         groupIds: groupIds ?? [],
+        jobTitleId: jobTitleId ?? null,
       })
       res.status(201).json(created)
     }),
@@ -42,8 +43,8 @@ export function createUserRoutes(userService: UserService): Router {
     "/:userId",
     asyncHandler(async (req, res) => {
       const userId = Number(req.params.userId)
-      const { name, email, employeeNo, role, groupIds } = req.body
-      const updated = await userService.updateUser(userId, { name, email, employeeNo, role, groupIds })
+      const { name, email, employeeNo, role, groupIds, jobTitleId } = req.body
+      const updated = await userService.updateUser(userId, { name, email, employeeNo, role, groupIds, jobTitleId })
       res.json(updated)
     }),
   )

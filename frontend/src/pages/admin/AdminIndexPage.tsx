@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 const ADMIN_MENU_ITEMS = [
   { to: "/admin/users", label: "利用者管理", description: "アカウントの作成・退職処理を行います" },
   { to: "/admin/groups", label: "グループ管理", description: "グループの追加・編集・削除を行います" },
+  { to: "/admin/job-titles", label: "役職管理", description: "役職の追加・編集・削除を行います" },
   { to: "/admin/holidays", label: "祝日設定", description: "会社独自の休日カレンダーを設定します" },
   { to: "/admin/top-settings", label: "表示件数設定", description: "トップ画面の各種一覧の表示件数を設定します" },
   { to: "/admin/bulk-delete", label: "掲示板一括削除", description: "期間を指定して掲示板の投稿を一括削除します" },

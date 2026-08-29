@@ -10,12 +10,14 @@ import {
   type Group,
   type GroupMember,
 } from "../../../api/groups"
+import { listJobTitles, type JobTitle } from "../../../api/jobTitles"
 import { listUserDirectory, type DirectoryUser } from "../../../api/userDirectory"
-import { reactivateUser, retireUser, listUsers, type UserSummary } from "../../../api/users"
+import { reactivateUser, retireUser, listUsers, updateUser, type UserSummary } from "../../../api/users"
 
 export function UsersPage() {
   const [users, setUsers] = useState<UserSummary[]>([])
   const [groups, setGroups] = useState<Group[]>([])
+  const [jobTitles, setJobTitles] = useState<JobTitle[]>([])
   const [selectedGroupId, setSelectedGroupId] = useState<string>("all")
   const [members, setMembers] = useState<GroupMember[]>([])
   const [directory, setDirectory] = useState<DirectoryUser[]>([])
@@ -30,12 +32,13 @@ export function UsersPage() {
 
   useEffect(() => {
     let cancelled = false
-    Promise.all([listUsers(), listGroups(), listUserDirectory()])
-      .then(([userData, groupData, directoryData]) => {
+    Promise.all([listUsers(), listGroups(), listUserDirectory(), listJobTitles()])
+      .then(([userData, groupData, directoryData, jobTitleData]) => {
         if (cancelled) return
         setUsers(userData)
         setGroups(groupData)
         setDirectory(directoryData)
+        setJobTitles(jobTitleData)
       })
       .catch(() => {
         if (!cancelled) setError("利用者一覧の取得に失敗しました")
@@ -47,6 +50,16 @@ export function UsersPage() {
       cancelled = true
     }
   }, [])
+
+  async function handleChangeJobTitle(userId: number, jobTitleId: string) {
+    setError(null)
+    try {
+      await updateUser(userId, { jobTitleId: jobTitleId ? Number(jobTitleId) : null })
+      await reloadUsers()
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "役職の更新に失敗しました")
+    }
+  }
 
   useEffect(() => {
     if (selectedGroupId === "all") return
@@ -156,6 +169,7 @@ export function UsersPage() {
                 <th className="px-4 py-2">氏名</th>
                 <th className="px-4 py-2">ログインID</th>
                 <th className="px-4 py-2">権限</th>
+                <th className="px-4 py-2">役職</th>
                 <th className="px-4 py-2">状態</th>
                 <th className="px-4 py-2"></th>
               </tr>
@@ -166,6 +180,20 @@ export function UsersPage() {
                   <td className="px-4 py-2">{u.name}</td>
                   <td className="px-4 py-2">{u.loginId}</td>
                   <td className="px-4 py-2">{u.role === "admin" ? "管理者" : "一般社員"}</td>
+                  <td className="px-4 py-2">
+                    <select
+                      className="rounded-md border border-border px-2 py-1 text-[12.5px]"
+                      value={u.jobTitleId ?? ""}
+                      onChange={(e) => handleChangeJobTitle(u.userId, e.target.value)}
+                    >
+                      <option value="">未設定</option>
+                      {jobTitles.map((jobTitle) => (
+                        <option key={jobTitle.jobTitleId} value={jobTitle.jobTitleId}>
+                          {jobTitle.name}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
                   <td className="px-4 py-2">{u.status === "active" ? "在籍" : "退職済み"}</td>
                   <td className="px-4 py-2">
                     {u.status === "active" ? (

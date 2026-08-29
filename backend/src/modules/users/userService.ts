@@ -26,6 +26,7 @@ export class UserService {
       employeeNo: input.employeeNo ?? null,
       role: input.role,
       groupIds: input.groupIds,
+      jobTitleId: input.jobTitleId ?? null,
     })
   }
 

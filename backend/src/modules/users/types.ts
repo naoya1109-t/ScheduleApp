@@ -10,6 +10,7 @@ export interface User {
   employeeNo: string | null
   role: UserRole
   status: UserStatus
+  jobTitleId: number | null
 }
 
 export type UserSummary = Omit<User, "passwordHash">
@@ -22,6 +23,7 @@ export interface CreateUserInput {
   employeeNo?: string | null
   role: UserRole
   groupIds: number[]
+  jobTitleId?: number | null
 }
 
 export interface UpdateUserInput {
@@ -30,6 +32,7 @@ export interface UpdateUserInput {
   employeeNo?: string | null
   role?: UserRole
   groupIds?: number[]
+  jobTitleId?: number | null
 }
 
 export interface UserRepository {
@@ -44,6 +47,7 @@ export interface UserRepository {
     employeeNo: string | null
     role: UserRole
     groupIds: number[]
+    jobTitleId: number | null
   }): Promise<UserSummary>
   update(userId: number, input: UpdateUserInput): Promise<UserSummary>
   setStatus(userId: number, status: UserStatus): Promise<void>

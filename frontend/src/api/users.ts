@@ -11,6 +11,7 @@ export interface UserSummary {
   employeeNo: string | null
   role: UserRole
   status: UserStatus
+  jobTitleId: number | null
 }
 
 export interface CreateUserInput {
@@ -21,6 +22,16 @@ export interface CreateUserInput {
   employeeNo?: string
   role: UserRole
   groupIds: number[]
+  jobTitleId?: number | null
+}
+
+export interface UpdateUserInput {
+  name?: string
+  email?: string | null
+  employeeNo?: string | null
+  role?: UserRole
+  groupIds?: number[]
+  jobTitleId?: number | null
 }
 
 export function listUsers(): Promise<UserSummary[]> {
@@ -30,6 +41,13 @@ export function listUsers(): Promise<UserSummary[]> {
 export function createUser(input: CreateUserInput): Promise<UserSummary> {
   return apiFetch<UserSummary>("/api/admin/users", {
     method: "POST",
+    body: JSON.stringify(input),
+  })
+}
+
+export function updateUser(userId: number, input: UpdateUserInput): Promise<UserSummary> {
+  return apiFetch<UserSummary>(`/api/admin/users/${userId}`, {
+    method: "PUT",
     body: JSON.stringify(input),
   })
 }
