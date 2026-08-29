@@ -10,6 +10,7 @@ import { HolidaysPage } from "./pages/admin/holidays/HolidaysPage"
 import { BoardListPage } from "./pages/board/BoardListPage"
 import { CalendarPage } from "./pages/calendar/CalendarPage"
 import { MonthViewPage } from "./pages/calendar/MonthViewPage"
+import { NewEventPage } from "./pages/calendar/NewEventPage"
 import { NewPostPage } from "./pages/board/NewPostPage"
 import { PostDetailPage } from "./pages/board/PostDetailPage"
 import { PostPermalinkRedirect } from "./pages/board/PostPermalinkRedirect"
@@ -62,6 +63,16 @@ function App() {
             <RequireAuth>
               <Layout>
                 <CalendarPage />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/calendar/new"
+          element={
+            <RequireAuth>
+              <Layout>
+                <NewEventPage />
               </Layout>
             </RequireAuth>
           }
