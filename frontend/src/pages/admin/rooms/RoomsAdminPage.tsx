@@ -1,14 +1,14 @@
 import { useEffect, useState, type FormEvent } from "react"
+import { Link } from "react-router-dom"
 import { ApiError } from "../../../api/client"
-import { createRoom, deleteRoom, listRooms, updateRoom, updateRoomOrder, type MeetingRoom } from "../../../api/rooms"
+import { deleteRoom, listRooms, updateRoom, updateRoomOrder, type MeetingRoom } from "../../../api/rooms"
 
-const emptyNewRoom = { name: "", memo: "" }
+const emptyEditForm = { name: "", memo: "" }
 
 export function RoomsAdminPage() {
   const [rooms, setRooms] = useState<MeetingRoom[]>([])
-  const [newRoom, setNewRoom] = useState(emptyNewRoom)
   const [editingRoomId, setEditingRoomId] = useState<number | null>(null)
-  const [editForm, setEditForm] = useState(emptyNewRoom)
+  const [editForm, setEditForm] = useState(emptyEditForm)
   const [error, setError] = useState<string | null>(null)
   const [orderSaved, setOrderSaved] = useState(false)
 
@@ -25,18 +25,6 @@ export function RoomsAdminPage() {
       cancelled = true
     }
   }, [])
-
-  async function handleCreate(event: FormEvent) {
-    event.preventDefault()
-    setError(null)
-    try {
-      await createRoom({ name: newRoom.name, memo: newRoom.memo || null })
-      setNewRoom(emptyNewRoom)
-      await reload()
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "会議室の登録に失敗しました")
-    }
-  }
 
   function startEdit(room: MeetingRoom) {
     setEditingRoomId(room.roomId)
@@ -90,34 +78,12 @@ export function RoomsAdminPage() {
 
   return (
     <div className="mx-auto max-w-[700px] p-8">
-      <h1 className="mb-6 text-[18px] font-bold">会議室管理</h1>
-
-      <form
-        onSubmit={handleCreate}
-        className="mb-6 flex items-end gap-3 rounded-[14px] border border-border bg-surface p-6"
-      >
-        <div className="flex-1">
-          <label className="mb-1 block text-[11.5px] font-bold text-text-soft">会議室名</label>
-          <input
-            className="w-full rounded-md border border-border px-3 py-2 text-sm"
-            value={newRoom.name}
-            onChange={(e) => setNewRoom({ ...newRoom, name: e.target.value })}
-            required
-          />
-        </div>
-        <div className="flex-1">
-          <label className="mb-1 block text-[11.5px] font-bold text-text-soft">メモ</label>
-          <input
-            className="w-full rounded-md border border-border px-3 py-2 text-sm"
-            value={newRoom.memo}
-            onChange={(e) => setNewRoom({ ...newRoom, memo: e.target.value })}
-            placeholder="定員・設備など"
-          />
-        </div>
-        <button type="submit" className="rounded-md bg-indigo px-4 py-2 text-sm font-bold text-white">
-          追加
-        </button>
-      </form>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-[18px] font-bold">会議室管理</h1>
+        <Link to="/admin/rooms/new" className="rounded-md bg-indigo px-4 py-2 text-sm font-bold text-white">
+          + 新規登録
+        </Link>
+      </div>
 
       {error && <p className="mb-4 text-sm text-coral">{error}</p>}
 

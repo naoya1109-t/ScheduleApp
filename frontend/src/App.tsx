@@ -25,6 +25,7 @@ import { TopSettingsPage } from "./pages/admin/topSettings/TopSettingsPage"
 import { GroupOrderPage } from "./pages/admin/groupOrder/GroupOrderPage"
 import { BulkDeletePage } from "./pages/admin/bulkDelete/BulkDeletePage"
 import { RoomsAdminPage } from "./pages/admin/rooms/RoomsAdminPage"
+import { NewRoomPage } from "./pages/admin/rooms/NewRoomPage"
 
 function App() {
   return (
@@ -247,6 +248,16 @@ function App() {
             <RequireAuth adminOnly>
               <Layout>
                 <RoomsAdminPage />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/rooms/new"
+          element={
+            <RequireAuth adminOnly>
+              <Layout>
+                <NewRoomPage />
               </Layout>
             </RequireAuth>
           }
