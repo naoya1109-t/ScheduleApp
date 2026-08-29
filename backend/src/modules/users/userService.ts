@@ -10,6 +10,12 @@ export class UserService {
     return this.repository.list()
   }
 
+  /** 担当営業選択等のプルダウン用。管理者限定のlistUsersと異なり、一般社員も利用できる最小限の一覧 */
+  async listActiveDirectory(): Promise<Array<{ userId: number; name: string }>> {
+    const users = await this.repository.list()
+    return users.filter((user) => user.status === "active").map((user) => ({ userId: user.userId, name: user.name }))
+  }
+
   async createUser(input: CreateUserInput): Promise<UserSummary> {
     const passwordHash = await bcrypt.hash(input.password, SALT_ROUNDS)
     return this.repository.create({

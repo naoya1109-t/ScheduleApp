@@ -14,6 +14,9 @@ import { PostPermalinkRedirect } from "./pages/board/PostPermalinkRedirect"
 import { RoomsPage } from "./pages/rooms/RoomsPage"
 import { FilesPage } from "./pages/files/FilesPage"
 import { TopPage } from "./pages/top/TopPage"
+import { IncidentReportListPage } from "./pages/incidentReports/IncidentReportListPage"
+import { NewIncidentReportPage } from "./pages/incidentReports/NewIncidentReportPage"
+import { IncidentReportDetailPage } from "./pages/incidentReports/IncidentReportDetailPage"
 
 function App() {
   return (
@@ -66,6 +69,36 @@ function App() {
             <RequireAuth>
               <Layout>
                 <FilesPage />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/incident-reports/new"
+          element={
+            <RequireAuth>
+              <Layout>
+                <NewIncidentReportPage />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/incident-reports/:reportId"
+          element={
+            <RequireAuth>
+              <Layout>
+                <IncidentReportDetailPage />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/incident-reports"
+          element={
+            <RequireAuth>
+              <Layout>
+                <IncidentReportListPage />
               </Layout>
             </RequireAuth>
           }

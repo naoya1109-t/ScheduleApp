@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { to: "/rooms", label: "会議室予約" },
   { to: "/board", label: "掲示板" },
   { to: "/files", label: "ファイル" },
+  { to: "/incident-reports", label: "事故報告" },
 ]
 
 const ADMIN_NAV_ITEMS = [

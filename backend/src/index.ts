@@ -22,6 +22,10 @@ import { createFileRoutes } from "./modules/files/fileRoutes.js"
 import { FileService } from "./modules/files/fileService.js"
 import { MssqlFileRepository } from "./modules/files/fileRepository.mssql.js"
 import { MssqlFolderRepository } from "./modules/files/folderRepository.mssql.js"
+import { createIncidentReportRoutes } from "./modules/incidentReports/incidentReportRoutes.js"
+import { IncidentReportService } from "./modules/incidentReports/incidentReportService.js"
+import { MssqlIncidentReportRepository } from "./modules/incidentReports/incidentReportRepository.mssql.js"
+import { MssqlCustomerMasterRepository } from "./modules/incidentReports/customerMasterRepository.mssql.js"
 import { createRoomRoutes } from "./modules/rooms/roomRoutes.js"
 import { RoomService } from "./modules/rooms/roomService.js"
 import { MssqlRoomRepository } from "./modules/rooms/roomRepository.mssql.js"
@@ -31,6 +35,7 @@ import { TopPageService } from "./modules/topPage/topPageService.js"
 import { MssqlTopPageSettingsRepository } from "./modules/topPage/topPageSettingsRepository.mssql.js"
 import { MssqlUserRepository } from "./modules/users/userRepository.mssql.js"
 import { UserService } from "./modules/users/userService.js"
+import { createDirectoryRoutes } from "./modules/users/directoryRoutes.js"
 import { createUserRoutes } from "./modules/users/userRoutes.js"
 
 const app = express()
@@ -83,9 +88,17 @@ const roomService = new RoomService(roomRepository, reservationRepository, event
 const folderRepository = new MssqlFolderRepository(getPool)
 const fileRepository = new MssqlFileRepository(getPool)
 const fileService = new FileService(fileRepository, folderRepository, operationLogRepository, env.storageDir)
+const incidentReportRepository = new MssqlIncidentReportRepository(getPool)
+const customerMasterRepository = new MssqlCustomerMasterRepository(getPool)
+const incidentReportService = new IncidentReportService(
+  incidentReportRepository,
+  customerMasterRepository,
+  operationLogRepository,
+)
 
 app.use("/api/auth", createAuthRoutes(authService, userRepository))
 app.use("/api/admin/users", createUserRoutes(userService))
+app.use("/api/users", createDirectoryRoutes(userService))
 app.use("/api/posts", createBoardRoutes(postService))
 app.use("/api/calendar", createCalendarRoutes(calendarService))
 app.use("/api/holidays", createHolidayRoutes(holidayService))
@@ -93,6 +106,7 @@ app.use("/api/groups", createGroupRoutes(groupRepository))
 app.use("/api/top-page", createTopPageRoutes(topPageService))
 app.use("/api/rooms", createRoomRoutes(roomService))
 app.use("/api/files", createFileRoutes(fileService, env.storageDir))
+app.use("/api/incident-reports", createIncidentReportRoutes(incidentReportService))
 
 app.use(errorHandler)
 

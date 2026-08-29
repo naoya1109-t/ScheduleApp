@@ -10,46 +10,48 @@
 
 ## 1. DBスキーマ
 
-- [ ] `012_incident_reports.sql` マイグレーション作成(`incident_report`テーブル、`app_user`への4つのFK、索引2件)
+- [x] `012_incident_reports.sql` マイグレーション作成(`incident_report`テーブル、`app_user`への4つのFK、索引2件)
 
-**完了条件**: `design.md` 3-1章のDDLと一致するテーブルがマイグレーションで再現できる。
+**完了条件**: `design.md` 3-1章のDDLと一致するテーブルがマイグレーションで再現できる。→ SQL作成完了。**実DBへの適用は未実施**(既存マイグレーション同様、接続アカウント未発行のため)。
 
 ## 2. 得意先マスタ参照
 
-- [ ] `CustomerMasterRepository`インターフェース・mssql実装(仮のビュー名で実装し、確定次第置き換えられるようにする)
-- [ ] 得意先コード検索API(`GET /api/customers?query=`)
+- [x] `CustomerMasterRepository`インターフェース・mssql実装(仮のビュー名`dbo.vw_customer_master`で実装。ビュー未整備時は例外を握りつぶし空配列/undefinedを返す)
+- [x] 得意先コード検索API(`GET /api/incident-reports/customers?query=`)
 
-**完了条件**: ビュー名確定後、設定変更のみで実データ参照に切り替えられる。ビュー未確定の間はAPIがエラーにならず空配列を返す、または手入力にフォールバックできる。
+**完了条件**: ビュー名確定後、設定変更のみで実データ参照に切り替えられる。ビュー未確定の間はAPIがエラーにならず空配列を返す、または手入力にフォールバックできる。→ ユニットテストで確認済み。フロント側は当面、得意先コード・得意先名を手入力するUIとした(自動補完UIはビュー確定後に追加)。
 
 ## 3. 事故報告CRUD(バックエンド)
 
-- [ ] `IncidentReportRepository`インターフェース・mssql実装
-- [ ] `IncidentReportService`(作成・更新・一覧・詳細取得、担当営業での絞り込み)
-- [ ] チェック状態更新(`pending`→`checked`)、周知記録(周知担当者・日時)のAPI
-- [ ] 操作ログ連携(作成・更新を`operation_log`に記録)
-- [ ] フェイクリポジトリによるユニットテスト(絞り込み、チェック状態更新、操作ログ記録)
+- [x] `IncidentReportRepository`インターフェース・mssql実装
+- [x] `IncidentReportService`(作成・更新・一覧・詳細取得、担当営業での絞り込み)
+- [x] チェック状態更新(`pending`→`checked`)、周知記録(周知担当者・日時)のAPI
+- [x] 操作ログ連携(作成・更新・チェック・周知を`operation_log`に記録)
+- [x] フェイクリポジトリによるユニットテスト(絞り込み、チェック状態更新、操作ログ記録、入力者自動設定)
 
-**完了条件**: 担当営業による絞り込み検索が正しく動作し、操作がすべて操作ログに記録される。
+**完了条件**: 担当営業による絞り込み検索が正しく動作し、操作がすべて操作ログに記録される。→ ユニットテスト6件で検証済み。**実SQL Serverでの最終確認は未実施**。
+
+**メモ(2026-08-29)**: 実装中に「入力者(reporterId)がテストで未設定になる」バグを発見。ルート側で`req.session.userId`を都度セットする設計だとサービス層のテストで再現されず見落としやすいため、`IncidentReportService.createReport(input, actorId)`がactorIdから`reporterId`を自動設定する設計に修正した(呼び出し側の実装ミスに依存しない設計)。担当営業選択用に、一般社員でも使える利用者ディレクトリAPI(`GET /api/users`)を新設した(既存の`/api/admin/users`は管理者限定のため)。
 
 ## 4. フロントエンド画面
 
-- [ ] `IncidentReportListPage`(一覧、担当営業フィルタのプルダウン)
-- [ ] `NewIncidentReportPage`(新規登録フォーム。得意先コードは当面手入力)
-- [ ] `IncidentReportDetailPage`(詳細表示、チェック状態更新、周知記録)
-- [ ] ナビゲーションに「事故報告」を追加
+- [x] `IncidentReportListPage`(一覧、担当営業フィルタのプルダウン)
+- [x] `NewIncidentReportPage`(新規登録フォーム。得意先コード・得意先名は当面手入力)
+- [x] `IncidentReportDetailPage`(詳細表示、チェック状態更新、周知記録)
+- [x] ナビゲーションに「事故報告」を追加
 
-**完了条件**: 事務員として新規登録でき、営業として担当営業で絞り込んで一覧確認できる。
+**完了条件**: 事務員として新規登録でき、営業として担当営業で絞り込んで一覧確認できる。→ lint・ビルド通過。**実SQL Server・実ブラウザでのクリック動作確認は未実施**(DB接続情報未発行のため)。
 
 ## 5. 品質チェック
 
-- [ ] 型チェック・lint・テストがすべて通過
-- [ ] `docs/functional-design.md`・`docs/repository-structure.md`への反映(要件確定後、必要な場合のみ)
+- [x] 型チェック・lint・テストがすべて通過
+- [ ] `docs/functional-design.md`・`docs/repository-structure.md`への反映(要件確定後、必要な場合のみ。現時点では未確定事項が残るため見送り)
 
 ---
 
 ## 進捗状況
 
-未着手(2026-08-29時点)。1章(DBスキーマ)から着手する。
+1〜4章完了、5章は型チェック・lint・テストのみ完了(2026-08-29時点)。実DB・実ブラウザでの確認と、得意先マスタビューの正式名称反映が残作業。
 
 ## 全体の完了条件
 
