@@ -13,6 +13,8 @@ import { PostDetailPage } from "./pages/board/PostDetailPage"
 import { PostPermalinkRedirect } from "./pages/board/PostPermalinkRedirect"
 import { RoomsPage } from "./pages/rooms/RoomsPage"
 import { FilesPage } from "./pages/files/FilesPage"
+import { FileDetailPage } from "./pages/files/FileDetailPage"
+import { FilePermalinkRedirect } from "./pages/files/FilePermalinkRedirect"
 import { TopPage } from "./pages/top/TopPage"
 import { IncidentReportListPage } from "./pages/incidentReports/IncidentReportListPage"
 import { NewIncidentReportPage } from "./pages/incidentReports/NewIncidentReportPage"
@@ -69,6 +71,26 @@ function App() {
             <RequireAuth>
               <Layout>
                 <FilesPage />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/files/link/:slug"
+          element={
+            <RequireAuth>
+              <Layout>
+                <FilePermalinkRedirect />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/files/:fileId"
+          element={
+            <RequireAuth>
+              <Layout>
+                <FileDetailPage />
               </Layout>
             </RequireAuth>
           }

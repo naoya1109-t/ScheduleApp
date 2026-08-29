@@ -12,8 +12,9 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
+  const redirectTo = (location.state as { from?: string } | null)?.from ?? "/"
+
   if (user) {
-    const redirectTo = (location.state as { from?: string } | null)?.from ?? "/"
     return <Navigate to={redirectTo} replace />
   }
 
@@ -23,7 +24,7 @@ export function LoginPage() {
     setSubmitting(true)
     try {
       await login(loginId, password)
-      navigate("/", { replace: true })
+      navigate(redirectTo, { replace: true })
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "ログインに失敗しました")
     } finally {

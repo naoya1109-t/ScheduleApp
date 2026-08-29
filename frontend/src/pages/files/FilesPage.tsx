@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react"
+import { Link } from "react-router-dom"
 import { ApiError } from "../../api/client"
 import {
   createFolder,
@@ -145,7 +146,9 @@ export function FilesPage() {
                 className="flex items-center justify-between rounded-md border border-border bg-surface px-4 py-3 text-sm"
               >
                 <div>
-                  <span className="font-bold">{file.fileName}</span>
+                  <Link to={`/files/${file.fileId}`} className="font-bold text-indigo">
+                    {file.fileName}
+                  </Link>
                   <div className="text-[11.5px] text-text-soft">
                     更新者: {file.updatedByName} ・ {new Date(file.updatedAt).toLocaleString("ja-JP")}
                   </div>
