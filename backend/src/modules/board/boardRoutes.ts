@@ -27,7 +27,7 @@ export function createBoardRoutes(postService: PostService, storageDir: string):
   router.post(
     "/",
     asyncHandler(async (req, res) => {
-      const { title, bodyHtml, visibilityScope, groupId } = req.body
+      const { title, bodyHtml, visibilityScope, groupId, publishStartAt, publishEndAt } = req.body
       if (!title || !bodyHtml || !visibilityScope) {
         res.status(400).json({ message: "title, bodyHtml, visibilityScope は必須です" })
         return
@@ -38,6 +38,8 @@ export function createBoardRoutes(postService: PostService, storageDir: string):
         bodyHtml,
         visibilityScope,
         groupId: groupId ?? null,
+        publishStartAt: publishStartAt ?? null,
+        publishEndAt: publishEndAt ?? null,
       })
       res.status(201).json(created)
     }),
@@ -113,12 +115,14 @@ export function createBoardRoutes(postService: PostService, storageDir: string):
     "/:postId",
     asyncHandler(async (req, res) => {
       const postId = Number(req.params.postId)
-      const { title, bodyHtml, visibilityScope, groupId } = req.body
+      const { title, bodyHtml, visibilityScope, groupId, publishStartAt, publishEndAt } = req.body
       const updated = await postService.updatePost(postId, req.session.userId!, {
         title,
         bodyHtml,
         visibilityScope,
         groupId,
+        publishStartAt,
+        publishEndAt,
       })
       res.json(updated)
     }),

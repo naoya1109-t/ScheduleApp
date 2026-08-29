@@ -20,6 +20,8 @@ interface PostRow {
   group_id: number | null
   updated_at: string
   permalink_slug: string
+  publish_start_at: string | null
+  publish_end_at: string | null
 }
 
 function toPost(row: PostRow): Post {
@@ -33,12 +35,15 @@ function toPost(row: PostRow): Post {
     groupId: row.group_id,
     updatedAt: row.updated_at,
     permalinkSlug: row.permalink_slug,
+    publishStartAt: row.publish_start_at,
+    publishEndAt: row.publish_end_at,
   }
 }
 
 const POST_SELECT = `
   SELECT p.post_id, p.author_id, u.name AS author_name, p.title, p.body_html,
-         p.visibility_scope, p.group_id, p.updated_at, p.permalink_slug
+         p.visibility_scope, p.group_id, p.updated_at, p.permalink_slug,
+         p.publish_start_at, p.publish_end_at
   FROM post p
   JOIN app_user u ON u.user_id = p.author_id
 `
@@ -53,14 +58,24 @@ export class MssqlPostRepository implements PostRepository {
       .input("viewerId", viewerId).query<PostRow & { is_read: number }>(`
         SELECT p.post_id, p.author_id, u.name AS author_name, p.title, p.body_html,
                p.visibility_scope, p.group_id, p.updated_at, p.permalink_slug,
+               p.publish_start_at, p.publish_end_at,
                CASE WHEN pr.user_id IS NOT NULL THEN 1 ELSE 0 END AS is_read
         FROM post p
         JOIN app_user u ON u.user_id = p.author_id
         LEFT JOIN post_read pr ON pr.post_id = p.post_id AND pr.user_id = @viewerId
-        WHERE p.visibility_scope = 'company'
-           OR (p.visibility_scope = 'group' AND p.group_id IN (
-                 SELECT group_id FROM user_group WHERE user_id = @viewerId
-               ))
+        WHERE (
+          p.visibility_scope = 'company'
+          OR (p.visibility_scope = 'group' AND p.group_id IN (
+                SELECT group_id FROM user_group WHERE user_id = @viewerId
+              ))
+        )
+        AND (
+          p.author_id = @viewerId
+          OR (
+            (p.publish_start_at IS NULL OR p.publish_start_at <= SYSUTCDATETIME())
+            AND (p.publish_end_at IS NULL OR p.publish_end_at >= SYSUTCDATETIME())
+          )
+        )
         ORDER BY p.updated_at DESC
       `)
     return result.recordset.map((row) => ({ ...toPost(row), isRead: row.is_read === 1 }))
@@ -95,10 +110,12 @@ export class MssqlPostRepository implements PostRepository {
       .input("bodyHtml", input.bodyHtml)
       .input("visibilityScope", input.visibilityScope)
       .input("groupId", input.groupId)
-      .input("permalinkSlug", input.permalinkSlug).query<{ post_id: number }>(`
-        INSERT INTO post (author_id, title, body_html, visibility_scope, group_id, permalink_slug)
+      .input("permalinkSlug", input.permalinkSlug)
+      .input("publishStartAt", input.publishStartAt ?? null)
+      .input("publishEndAt", input.publishEndAt ?? null).query<{ post_id: number }>(`
+        INSERT INTO post (author_id, title, body_html, visibility_scope, group_id, permalink_slug, publish_start_at, publish_end_at)
         OUTPUT inserted.post_id
-        VALUES (@authorId, @title, @bodyHtml, @visibilityScope, @groupId, @permalinkSlug)
+        VALUES (@authorId, @title, @bodyHtml, @visibilityScope, @groupId, @permalinkSlug, @publishStartAt, @publishEndAt)
       `)
     const created = await this.findById(result.recordset[0].post_id)
     if (!created) {
@@ -126,6 +143,14 @@ export class MssqlPostRepository implements PostRepository {
     if (input.groupId !== undefined) {
       request.input("groupId", input.groupId)
       assignments.push("group_id = @groupId")
+    }
+    if (input.publishStartAt !== undefined) {
+      request.input("publishStartAt", input.publishStartAt)
+      assignments.push("publish_start_at = @publishStartAt")
+    }
+    if (input.publishEndAt !== undefined) {
+      request.input("publishEndAt", input.publishEndAt)
+      assignments.push("publish_end_at = @publishEndAt")
     }
     await request.query(`UPDATE post SET ${assignments.join(", ")} WHERE post_id = @postId`)
     const updated = await this.findById(postId)

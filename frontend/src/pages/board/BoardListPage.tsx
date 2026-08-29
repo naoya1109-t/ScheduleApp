@@ -36,7 +36,11 @@ export function BoardListPage() {
         <p className="text-text-soft">読み込み中...</p>
       ) : (
         <div className="flex flex-col gap-3">
-          {posts.map((post) => (
+          {posts.map((post) => {
+            const now = new Date()
+            const isScheduled = post.publishStartAt !== null && new Date(post.publishStartAt) > now
+            const isExpired = post.publishEndAt !== null && new Date(post.publishEndAt) < now
+            return (
             <Link
               key={post.postId}
               to={`/board/${post.postId}`}
@@ -46,6 +50,16 @@ export function BoardListPage() {
                 {!post.isRead && (
                   <span className="rounded bg-coral-soft px-1.5 py-0.5 text-[10px] font-bold text-coral">
                     未読
+                  </span>
+                )}
+                {isScheduled && (
+                  <span className="rounded bg-indigo-soft px-1.5 py-0.5 text-[10px] font-bold text-indigo">
+                    公開予約中({new Date(post.publishStartAt!).toLocaleString("ja-JP")}〜)
+                  </span>
+                )}
+                {isExpired && (
+                  <span className="rounded bg-surface-alt px-1.5 py-0.5 text-[10px] font-bold text-text-soft">
+                    掲載終了({new Date(post.publishEndAt!).toLocaleString("ja-JP")}まで)
                   </span>
                 )}
                 <span className="text-[13.5px] font-bold text-text">{post.title}</span>
@@ -58,7 +72,8 @@ export function BoardListPage() {
                 更新者: {post.authorName} ・ {new Date(post.updatedAt).toLocaleDateString("ja-JP")}
               </div>
             </Link>
-          ))}
+            )
+          })}
           {posts.length === 0 && <p className="text-text-soft">投稿はまだありません。</p>}
         </div>
       )}

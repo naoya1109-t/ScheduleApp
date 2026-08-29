@@ -12,6 +12,8 @@ export interface PostSummary {
   updatedAt: string
   permalinkSlug: string
   isRead: boolean
+  publishStartAt: string | null
+  publishEndAt: string | null
 }
 
 export interface Post {
@@ -24,6 +26,8 @@ export interface Post {
   groupId: number | null
   updatedAt: string
   permalinkSlug: string
+  publishStartAt: string | null
+  publishEndAt: string | null
 }
 
 export interface Comment {
@@ -40,6 +44,8 @@ export interface CreatePostInput {
   bodyHtml: string
   visibilityScope: PostVisibilityScope
   groupId: number | null
+  publishStartAt?: string | null
+  publishEndAt?: string | null
 }
 
 export function listPosts(): Promise<PostSummary[]> {

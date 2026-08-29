@@ -40,6 +40,8 @@ export class PostService {
       updatedAt: row.updatedAt,
       permalinkSlug: row.permalinkSlug,
       isRead: row.isRead,
+      publishStartAt: row.publishStartAt,
+      publishEndAt: row.publishEndAt,
     }))
   }
 

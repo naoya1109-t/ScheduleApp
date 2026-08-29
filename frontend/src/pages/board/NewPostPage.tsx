@@ -13,6 +13,8 @@ export function NewPostPage() {
   const [visibilityScope, setVisibilityScope] = useState<PostVisibilityScope>("company")
   const [groupId, setGroupId] = useState("")
   const [groups, setGroups] = useState<Group[]>([])
+  const [publishStartAt, setPublishStartAt] = useState("")
+  const [publishEndAt, setPublishEndAt] = useState("")
   const [attachmentFiles, setAttachmentFiles] = useState<File[]>([])
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -28,6 +30,10 @@ export function NewPostPage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     setError(null)
+    if (publishStartAt && publishEndAt && new Date(publishEndAt) <= new Date(publishStartAt)) {
+      setError("公開終了日時は公開開始日時より後にしてください")
+      return
+    }
     setSubmitting(true)
     try {
       const created = await createPost({
@@ -35,6 +41,8 @@ export function NewPostPage() {
         bodyHtml,
         visibilityScope,
         groupId: visibilityScope === "group" && groupId ? Number(groupId) : null,
+        publishStartAt: publishStartAt ? new Date(publishStartAt).toISOString() : null,
+        publishEndAt: publishEndAt ? new Date(publishEndAt).toISOString() : null,
       })
       for (const file of attachmentFiles) {
         await uploadAttachment(created.postId, file)
@@ -92,6 +100,31 @@ export function NewPostPage() {
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="flex gap-4">
+          <div>
+            <label className="mb-1 block text-[11.5px] font-bold text-text-soft">
+              公開開始日時(任意・未指定は即時公開)
+            </label>
+            <input
+              type="datetime-local"
+              className="rounded-md border border-border px-3 py-2 text-sm"
+              value={publishStartAt}
+              onChange={(e) => setPublishStartAt(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-[11.5px] font-bold text-text-soft">
+              公開終了日時(任意・未指定は無期限)
+            </label>
+            <input
+              type="datetime-local"
+              className="rounded-md border border-border px-3 py-2 text-sm"
+              value={publishEndAt}
+              onChange={(e) => setPublishEndAt(e.target.value)}
+            />
+          </div>
         </div>
 
         <div>

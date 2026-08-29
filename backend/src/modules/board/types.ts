@@ -10,6 +10,10 @@ export interface Post {
   groupId: number | null
   updatedAt: string
   permalinkSlug: string
+  /** 未指定(null)の場合は即時公開 */
+  publishStartAt: string | null
+  /** 未指定(null)の場合は無期限に掲載 */
+  publishEndAt: string | null
 }
 
 export interface PostSummary {
@@ -22,6 +26,8 @@ export interface PostSummary {
   updatedAt: string
   permalinkSlug: string
   isRead: boolean
+  publishStartAt: string | null
+  publishEndAt: string | null
 }
 
 export type PostListRow = Post & { isRead: boolean }
@@ -48,6 +54,8 @@ export interface CreatePostInput {
   bodyHtml: string
   visibilityScope: PostVisibilityScope
   groupId: number | null
+  publishStartAt?: string | null
+  publishEndAt?: string | null
 }
 
 export interface UpdatePostInput {
@@ -55,9 +63,12 @@ export interface UpdatePostInput {
   bodyHtml?: string
   visibilityScope?: PostVisibilityScope
   groupId?: number | null
+  publishStartAt?: string | null
+  publishEndAt?: string | null
 }
 
 export interface PostRepository {
+  /** viewerId本人が著者の投稿は公開期間外でも表示する(登録できているかの確認用) */
   list(viewerId: number): Promise<PostListRow[]>
   findById(postId: number): Promise<Post | undefined>
   findBySlug(slug: string): Promise<Post | undefined>

@@ -29,11 +29,18 @@ export class FakePostRepository implements PostRepository {
 
   async list(viewerId: number): Promise<PostListRow[]> {
     const viewerGroups = this.userGroups.get(viewerId) ?? []
+    const now = new Date().toISOString()
     return this.posts
       .filter(
         (post) =>
           post.visibilityScope === "company" ||
           (post.visibilityScope === "group" && post.groupId !== null && viewerGroups.includes(post.groupId)),
+      )
+      .filter(
+        (post) =>
+          post.authorId === viewerId ||
+          ((post.publishStartAt === null || post.publishStartAt <= now) &&
+            (post.publishEndAt === null || post.publishEndAt >= now)),
       )
       .map((post) => ({
         ...post,
@@ -60,6 +67,8 @@ export class FakePostRepository implements PostRepository {
       groupId: input.groupId,
       updatedAt: new Date().toISOString(),
       permalinkSlug: input.permalinkSlug,
+      publishStartAt: input.publishStartAt ?? null,
+      publishEndAt: input.publishEndAt ?? null,
     }
     this.posts.push(post)
     return post
@@ -74,6 +83,8 @@ export class FakePostRepository implements PostRepository {
     if (input.bodyHtml !== undefined) post.bodyHtml = input.bodyHtml
     if (input.visibilityScope !== undefined) post.visibilityScope = input.visibilityScope
     if (input.groupId !== undefined) post.groupId = input.groupId
+    if (input.publishStartAt !== undefined) post.publishStartAt = input.publishStartAt
+    if (input.publishEndAt !== undefined) post.publishEndAt = input.publishEndAt
     post.updatedAt = new Date().toISOString()
     return post
   }

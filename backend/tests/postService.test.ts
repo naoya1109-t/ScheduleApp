@@ -122,4 +122,63 @@ describe("PostService", () => {
     expect(comment.authorName).toBe("鈴木花子")
     expect(comments).toHaveLength(1)
   })
+
+  it("公開開始日時が未来の投稿は一覧に表示されないが、投稿者本人には表示される", async () => {
+    const { repository, service } = setup()
+    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    await service.createPost({
+      authorId: 1,
+      title: "明日公開のお知らせ",
+      bodyHtml: "<p>本文</p>",
+      visibilityScope: "company",
+      groupId: null,
+      publishStartAt: tomorrow,
+    })
+    repository.setUserGroups(2, [])
+
+    const postsForOthers = await service.listPosts(2)
+    const postsForAuthor = await service.listPosts(1)
+
+    expect(postsForOthers).toHaveLength(0)
+    expect(postsForAuthor).toHaveLength(1)
+  })
+
+  it("公開終了日時を過ぎた投稿は一覧に表示されないが、投稿者本人には表示される", async () => {
+    const { repository, service } = setup()
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+    await service.createPost({
+      authorId: 1,
+      title: "掲載終了済みのお知らせ",
+      bodyHtml: "<p>本文</p>",
+      visibilityScope: "company",
+      groupId: null,
+      publishEndAt: yesterday,
+    })
+    repository.setUserGroups(2, [])
+
+    const postsForOthers = await service.listPosts(2)
+    const postsForAuthor = await service.listPosts(1)
+
+    expect(postsForOthers).toHaveLength(0)
+    expect(postsForAuthor).toHaveLength(1)
+  })
+
+  it("公開期間内の投稿は一覧に表示される", async () => {
+    const { repository, service } = setup()
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    await service.createPost({
+      authorId: 1,
+      title: "公開中のお知らせ",
+      bodyHtml: "<p>本文</p>",
+      visibilityScope: "company",
+      groupId: null,
+      publishStartAt: yesterday,
+      publishEndAt: tomorrow,
+    })
+    repository.setUserGroups(2, [])
+
+    const posts = await service.listPosts(2)
+    expect(posts).toHaveLength(1)
+  })
 })
