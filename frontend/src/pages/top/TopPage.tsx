@@ -31,6 +31,26 @@ function occurrencesOnDay(occurrences: VisibleOccurrence[], day: Date): VisibleO
   return occurrences.filter((occurrence) => isSameDay(new Date(occurrence.startAt), day))
 }
 
+function PlusIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  )
+}
+
+function NewRegistrationLink({ to }: { to: string }) {
+  return (
+    <Link
+      to={to}
+      className="flex items-center gap-1 rounded-md bg-white/20 px-2.5 py-1 text-[11.5px] font-bold text-white"
+    >
+      <PlusIcon />
+      新規登録
+    </Link>
+  )
+}
+
 export function TopPage() {
   const [anchor, setAnchor] = useState<Date>(startOfToday())
   const [groups, setGroups] = useState<Group[]>([])
@@ -100,7 +120,10 @@ export function TopPage() {
     <div className="mx-auto flex max-w-[1440px] flex-col gap-5 p-8">
       <div className="rounded-[14px] border border-border bg-surface shadow-sm">
         <div className="flex items-center justify-between bg-indigo px-6 py-3.5">
-          <h2 className="text-[15px] font-bold text-white">今週のスケジュール</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-[15px] font-bold text-white">今週のスケジュール</h2>
+            <NewRegistrationLink to="/calendar" />
+          </div>
           <Link to="/calendar" className="text-[12px] font-bold text-white/90">
             スケジュール画面へ
           </Link>
@@ -225,12 +248,7 @@ export function TopPage() {
           <div className="flex items-center justify-between bg-coral px-5 py-3.5">
             <div className="flex items-center gap-2">
               <h2 className="text-[14.5px] font-bold text-white">お知らせ・掲示板</h2>
-              <Link
-                to="/board/new"
-                className="rounded-md bg-white/20 px-2.5 py-1 text-[11.5px] font-bold text-white"
-              >
-                新規登録
-              </Link>
+              <NewRegistrationLink to="/board/new" />
             </div>
             <Link to="/board" className="text-[12px] font-bold text-white/90">
               もっと見る
@@ -257,9 +275,7 @@ export function TopPage() {
           <div className="flex items-center justify-between bg-teal px-5 py-3.5">
             <div className="flex items-center gap-2">
               <h2 className="text-[14.5px] font-bold text-white">ファイル共有</h2>
-              <Link to="/files" className="rounded-md bg-white/20 px-2.5 py-1 text-[11.5px] font-bold text-white">
-                新規登録
-              </Link>
+              <NewRegistrationLink to="/files" />
             </div>
             <Link to="/files" className="text-[12px] font-bold text-white/90">
               もっと見る
