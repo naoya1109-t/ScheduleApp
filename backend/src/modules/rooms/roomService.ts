@@ -7,6 +7,7 @@ import type {
   Reservation,
   ReservationRepository,
   RoomRepository,
+  UpdateMeetingRoomInput,
   UpdateReservationInput,
 } from "./types.js"
 
@@ -25,6 +26,26 @@ export class RoomService {
 
   async createRoom(input: CreateMeetingRoomInput): Promise<MeetingRoom> {
     return this.roomRepository.create(input)
+  }
+
+  async updateRoom(roomId: number, input: UpdateMeetingRoomInput): Promise<MeetingRoom> {
+    const room = await this.roomRepository.findById(roomId)
+    if (!room) {
+      throw new HttpError(404, "会議室が見つかりません")
+    }
+    return this.roomRepository.update(roomId, input)
+  }
+
+  async deleteRoom(roomId: number): Promise<void> {
+    const room = await this.roomRepository.findById(roomId)
+    if (!room) {
+      throw new HttpError(404, "会議室が見つかりません")
+    }
+    const hasReservations = await this.reservationRepository.existsForRoom(roomId)
+    if (hasReservations) {
+      throw new HttpError(409, "この会議室には予約が存在するため削除できません")
+    }
+    await this.roomRepository.delete(roomId)
   }
 
   async listReservations(roomId: number | null, from: string, to: string): Promise<Reservation[]> {

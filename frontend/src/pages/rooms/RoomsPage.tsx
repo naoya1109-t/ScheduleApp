@@ -2,7 +2,6 @@ import { useEffect, useState, type FormEvent } from "react"
 import { ApiError } from "../../api/client"
 import {
   createReservation,
-  createRoom,
   deleteReservation,
   listReservations,
   listRooms,
@@ -25,7 +24,6 @@ export function RoomsPage() {
   const [roomId, setRoomId] = useState<number | null>(null)
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [form, setForm] = useState({ title: "", startAt: "", endAt: "" })
-  const [newRoom, setNewRoom] = useState({ name: "", capacity: "" })
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -57,18 +55,6 @@ export function RoomsPage() {
     }
   }, [roomId])
 
-  async function handleCreateRoom(event: FormEvent) {
-    event.preventDefault()
-    const created = await createRoom({
-      name: newRoom.name,
-      capacity: newRoom.capacity ? Number(newRoom.capacity) : null,
-      equipment: null,
-    })
-    setNewRoom({ name: "", capacity: "" })
-    setRooms((prev) => [...prev, created])
-    setRoomId(created.roomId)
-  }
-
   async function handleCreateReservation(event: FormEvent) {
     event.preventDefault()
     if (roomId === null) return
@@ -95,35 +81,6 @@ export function RoomsPage() {
   return (
     <div className="mx-auto max-w-[800px] p-8">
       <h1 className="mb-6 text-[18px] font-bold">会議室予約</h1>
-
-      {user?.role === "admin" && (
-        <form
-          onSubmit={handleCreateRoom}
-          className="mb-6 flex items-end gap-3 rounded-[14px] border border-border bg-surface p-4"
-        >
-          <div>
-            <label className="mb-1 block text-[11px] font-bold text-text-soft">会議室名(管理者用)</label>
-            <input
-              className="rounded-md border border-border px-3 py-1.5 text-sm"
-              value={newRoom.name}
-              onChange={(e) => setNewRoom({ ...newRoom, name: e.target.value })}
-              required
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-[11px] font-bold text-text-soft">定員</label>
-            <input
-              className="w-20 rounded-md border border-border px-3 py-1.5 text-sm"
-              value={newRoom.capacity}
-              onChange={(e) => setNewRoom({ ...newRoom, capacity: e.target.value })}
-              inputMode="numeric"
-            />
-          </div>
-          <button type="submit" className="rounded-md bg-indigo px-3 py-1.5 text-[12px] font-bold text-white">
-            会議室を追加
-          </button>
-        </form>
-      )}
 
       <div className="mb-6 flex items-center gap-3">
         <label className="text-[11.5px] font-bold text-text-soft">会議室</label>

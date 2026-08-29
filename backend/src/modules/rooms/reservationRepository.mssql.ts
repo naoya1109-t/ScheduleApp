@@ -186,4 +186,13 @@ export class MssqlReservationRepository implements ReservationRepository {
       .input("reservationId", reservationId)
       .query("DELETE FROM room_reservation WHERE reservation_id = @reservationId")
   }
+
+  async existsForRoom(roomId: number): Promise<boolean> {
+    const pool = await this.getPool()
+    const result = await pool
+      .request()
+      .input("roomId", roomId)
+      .query<{ reservation_id: number }>("SELECT TOP 1 reservation_id FROM room_reservation WHERE room_id = @roomId")
+    return result.recordset.length > 0
+  }
 }

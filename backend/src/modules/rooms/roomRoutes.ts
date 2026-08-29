@@ -34,6 +34,27 @@ export function createRoomRoutes(roomService: RoomService): Router {
     }),
   )
 
+  router.put(
+    "/:roomId",
+    requireAdmin,
+    asyncHandler(async (req, res) => {
+      const roomId = Number(req.params.roomId)
+      const { name, capacity, equipment } = req.body
+      const updated = await roomService.updateRoom(roomId, { name, capacity, equipment })
+      res.json(updated)
+    }),
+  )
+
+  router.delete(
+    "/:roomId",
+    requireAdmin,
+    asyncHandler(async (req, res) => {
+      const roomId = Number(req.params.roomId)
+      await roomService.deleteRoom(roomId)
+      res.status(204).end()
+    }),
+  )
+
   router.get(
     "/reservations",
     asyncHandler(async (req, res) => {

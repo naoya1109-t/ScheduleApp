@@ -29,6 +29,20 @@ export function createRoom(input: { name: string; capacity: number | null; equip
   })
 }
 
+export function updateRoom(
+  roomId: number,
+  input: { name?: string; capacity?: number | null; equipment?: string | null },
+) {
+  return apiFetch<MeetingRoom>(`/api/rooms/${roomId}`, {
+    method: "PUT",
+    body: JSON.stringify(input),
+  })
+}
+
+export function deleteRoom(roomId: number) {
+  return apiFetch<void>(`/api/rooms/${roomId}`, { method: "DELETE" })
+}
+
 export function listReservations(roomId: number, from: string, to: string): Promise<Reservation[]> {
   const params = new URLSearchParams({ roomId: String(roomId), from, to })
   return apiFetch<Reservation[]>(`/api/rooms/reservations?${params.toString()}`)

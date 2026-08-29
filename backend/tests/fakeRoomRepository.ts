@@ -1,4 +1,9 @@
-import type { CreateMeetingRoomInput, MeetingRoom, RoomRepository } from "../src/modules/rooms/types.js"
+import type {
+  CreateMeetingRoomInput,
+  MeetingRoom,
+  RoomRepository,
+  UpdateMeetingRoomInput,
+} from "../src/modules/rooms/types.js"
 
 export class FakeRoomRepository implements RoomRepository {
   rooms: MeetingRoom[] = []
@@ -16,5 +21,20 @@ export class FakeRoomRepository implements RoomRepository {
     const room: MeetingRoom = { ...input, roomId: this.nextId++ }
     this.rooms.push(room)
     return room
+  }
+
+  async update(roomId: number, input: UpdateMeetingRoomInput): Promise<MeetingRoom> {
+    const room = this.rooms.find((candidate) => candidate.roomId === roomId)
+    if (!room) {
+      throw new Error("会議室が見つかりません")
+    }
+    if (input.name !== undefined) room.name = input.name
+    if (input.capacity !== undefined) room.capacity = input.capacity
+    if (input.equipment !== undefined) room.equipment = input.equipment
+    return room
+  }
+
+  async delete(roomId: number): Promise<void> {
+    this.rooms = this.rooms.filter((room) => room.roomId !== roomId)
   }
 }

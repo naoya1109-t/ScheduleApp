@@ -11,6 +11,12 @@ export interface CreateMeetingRoomInput {
   equipment: string | null
 }
 
+export interface UpdateMeetingRoomInput {
+  name?: string
+  capacity?: number | null
+  equipment?: string | null
+}
+
 export interface Reservation {
   reservationId: number
   roomId: number
@@ -39,6 +45,8 @@ export interface RoomRepository {
   listAll(): Promise<MeetingRoom[]>
   findById(roomId: number): Promise<MeetingRoom | undefined>
   create(input: CreateMeetingRoomInput): Promise<MeetingRoom>
+  update(roomId: number, input: UpdateMeetingRoomInput): Promise<MeetingRoom>
+  delete(roomId: number): Promise<void>
 }
 
 export interface ReservationRepository {
@@ -50,4 +58,5 @@ export interface ReservationRepository {
   updateWithConflictCheck(reservationId: number, input: UpdateReservationInput): Promise<Reservation>
   setLinkedEvent(reservationId: number, eventId: number | null): Promise<void>
   delete(reservationId: number): Promise<void>
+  existsForRoom(roomId: number): Promise<boolean>
 }

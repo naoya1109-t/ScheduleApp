@@ -6,6 +6,7 @@ const ADMIN_MENU_ITEMS = [
   { to: "/admin/top-settings", label: "表示件数設定", description: "トップ画面の各種一覧の表示件数を設定します" },
   { to: "/admin/group-order", label: "表示順設定", description: "グループ内メンバーの表示順を設定します" },
   { to: "/admin/bulk-delete", label: "掲示板一括削除", description: "期間を指定して掲示板の投稿を一括削除します" },
+  { to: "/admin/rooms", label: "会議室管理", description: "会議室の追加・編集・削除を行います" },
 ]
 
 export function AdminIndexPage() {

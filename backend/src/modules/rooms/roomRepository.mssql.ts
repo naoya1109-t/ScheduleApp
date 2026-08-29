@@ -1,5 +1,5 @@
 import type { ConnectionPool } from "mssql"
-import type { CreateMeetingRoomInput, MeetingRoom, RoomRepository } from "./types.js"
+import type { CreateMeetingRoomInput, MeetingRoom, RoomRepository, UpdateMeetingRoomInput } from "./types.js"
 
 interface RoomRow {
   room_id: number
@@ -47,5 +47,35 @@ export class MssqlRoomRepository implements RoomRepository {
       throw new Error("会議室の作成に失敗しました")
     }
     return created
+  }
+
+  async update(roomId: number, input: UpdateMeetingRoomInput): Promise<MeetingRoom> {
+    const pool = await this.getPool()
+    const existing = await this.findById(roomId)
+    if (!existing) {
+      throw new Error("会議室が見つかりません")
+    }
+    const name = input.name ?? existing.name
+    const capacity = input.capacity !== undefined ? input.capacity : existing.capacity
+    const equipment = input.equipment !== undefined ? input.equipment : existing.equipment
+    await pool
+      .request()
+      .input("roomId", roomId)
+      .input("name", name)
+      .input("capacity", capacity)
+      .input("equipment", equipment)
+      .query(
+        "UPDATE meeting_room SET name = @name, capacity = @capacity, equipment = @equipment WHERE room_id = @roomId",
+      )
+    const updated = await this.findById(roomId)
+    if (!updated) {
+      throw new Error("会議室の更新に失敗しました")
+    }
+    return updated
+  }
+
+  async delete(roomId: number): Promise<void> {
+    const pool = await this.getPool()
+    await pool.request().input("roomId", roomId).query("DELETE FROM meeting_room WHERE room_id = @roomId")
   }
 }

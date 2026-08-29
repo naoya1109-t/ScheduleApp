@@ -86,4 +86,8 @@ export class FakeReservationRepository implements ReservationRepository {
   async delete(reservationId: number): Promise<void> {
     this.reservations = this.reservations.filter((reservation) => reservation.reservationId !== reservationId)
   }
+
+  async existsForRoom(roomId: number): Promise<boolean> {
+    return this.reservations.some((reservation) => reservation.roomId === roomId)
+  }
 }
