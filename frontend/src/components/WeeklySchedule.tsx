@@ -133,16 +133,20 @@ export function WeeklySchedule() {
         </div>
         {days.map((day) => {
           const holiday = holidayOnDay(day)
+          const dayOfWeek = day.getDay()
+          const headerClass = holiday
+            ? "bg-coral text-white"
+            : isSameDay(day, today)
+              ? "bg-indigo-soft text-indigo"
+              : dayOfWeek === 6
+                ? "bg-blue-100 text-blue-700"
+                : dayOfWeek === 0
+                  ? "bg-red-100 text-red-700"
+                  : "bg-surface-alt text-text-soft"
           return (
             <div
               key={day.toISOString()}
-              className={`flex flex-col items-center gap-0.5 border-b border-r border-border p-1.5 text-center text-[11px] font-semibold ${
-                holiday
-                  ? "bg-coral text-white"
-                  : isSameDay(day, today)
-                    ? "bg-indigo-soft text-indigo"
-                    : "bg-surface-alt text-text-soft"
-              }`}
+              className={`flex flex-col items-center gap-0.5 border-b border-r border-border p-1.5 text-center text-[11px] font-semibold ${headerClass}`}
             >
               <span>
                 {WEEKDAY_LABELS[(day.getDay() + 6) % 7]} {formatMd(day)}
