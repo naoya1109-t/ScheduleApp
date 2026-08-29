@@ -33,7 +33,12 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
+    <div className="relative flex min-h-screen items-center justify-center">
+      <img
+        src="/caremax-logo.svg"
+        alt="ケアマックスコーポレーション"
+        className="absolute left-8 top-6 h-9 w-auto"
+      />
       <form
         onSubmit={handleSubmit}
         className="w-full max-w-sm rounded-[14px] border border-border bg-surface p-8 shadow-sm"
