@@ -2,15 +2,67 @@ import { type ReactNode } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 
-const NAV_ITEMS = [
-  { to: "/", label: "トップ" },
-  { to: "/calendar", label: "スケジュール" },
-  { to: "/rooms", label: "会議室予約" },
-  { to: "/meeting-finder", label: "会議候補日抽出" },
-  { to: "/board", label: "掲示板" },
-  { to: "/files", label: "ファイル" },
-  { to: "/incident-reports", label: "事故報告" },
-]
+function HomeIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 11l9-8 9 8" />
+      <path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9" />
+    </svg>
+  )
+}
+
+function CalendarIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M16 3v4M8 3v4M3 10h18" />
+    </svg>
+  )
+}
+
+function MeetingRoomIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="12" rx="1" />
+      <path d="M8 21h8M12 16v5" />
+    </svg>
+  )
+}
+
+function ClockIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 3" />
+    </svg>
+  )
+}
+
+function BoardIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  )
+}
+
+function FolderIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    </svg>
+  )
+}
+
+function AlertIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3l10 18H2z" />
+      <path d="M12 9v5" />
+      <circle cx="12" cy="17" r="0.9" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
 
 function GearIcon() {
   return (
@@ -20,6 +72,16 @@ function GearIcon() {
     </svg>
   )
 }
+
+const NAV_ITEMS = [
+  { to: "/", label: "トップ", Icon: HomeIcon },
+  { to: "/calendar", label: "スケジュール", Icon: CalendarIcon },
+  { to: "/rooms", label: "会議室予約", Icon: MeetingRoomIcon },
+  { to: "/meeting-finder", label: "会議候補日抽出", Icon: ClockIcon },
+  { to: "/board", label: "掲示板", Icon: BoardIcon },
+  { to: "/files", label: "ファイル", Icon: FolderIcon },
+  { to: "/incident-reports", label: "事故報告", Icon: AlertIcon },
+]
 
 function AdminLink() {
   const location = useLocation()
@@ -77,10 +139,11 @@ export function Layout({ children }: { children: ReactNode }) {
                 to={item.to}
                 className={
                   location.pathname === item.to
-                    ? "border-b-2 border-indigo pb-1 text-sm font-bold text-indigo"
-                    : "pb-1 text-sm text-text-soft"
+                    ? "flex items-center gap-1.5 border-b-2 border-indigo pb-1 text-sm font-bold text-indigo"
+                    : "flex items-center gap-1.5 pb-1 text-sm text-text-soft"
                 }
               >
+                <item.Icon />
                 {item.label}
               </Link>
             ))}
