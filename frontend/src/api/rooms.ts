@@ -3,8 +3,8 @@ import { apiFetch } from "./client"
 export interface MeetingRoom {
   roomId: number
   name: string
-  capacity: number | null
-  equipment: string | null
+  memo: string | null
+  displayOrder: number
 }
 
 export interface Reservation {
@@ -22,17 +22,14 @@ export function listRooms(): Promise<MeetingRoom[]> {
   return apiFetch<MeetingRoom[]>("/api/rooms")
 }
 
-export function createRoom(input: { name: string; capacity: number | null; equipment: string | null }) {
+export function createRoom(input: { name: string; memo: string | null }) {
   return apiFetch<MeetingRoom>("/api/rooms", {
     method: "POST",
     body: JSON.stringify(input),
   })
 }
 
-export function updateRoom(
-  roomId: number,
-  input: { name?: string; capacity?: number | null; equipment?: string | null },
-) {
+export function updateRoom(roomId: number, input: { name?: string; memo?: string | null }) {
   return apiFetch<MeetingRoom>(`/api/rooms/${roomId}`, {
     method: "PUT",
     body: JSON.stringify(input),
@@ -41,6 +38,13 @@ export function updateRoom(
 
 export function deleteRoom(roomId: number) {
   return apiFetch<void>(`/api/rooms/${roomId}`, { method: "DELETE" })
+}
+
+export function updateRoomOrder(orders: { roomId: number; displayOrder: number }[]): Promise<MeetingRoom[]> {
+  return apiFetch<MeetingRoom[]>("/api/rooms/order", {
+    method: "PUT",
+    body: JSON.stringify({ orders }),
+  })
 }
 
 export function listReservations(roomId: number, from: string, to: string): Promise<Reservation[]> {

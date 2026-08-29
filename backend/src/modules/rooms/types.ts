@@ -1,20 +1,23 @@
 export interface MeetingRoom {
   roomId: number
   name: string
-  capacity: number | null
-  equipment: string | null
+  memo: string | null
+  displayOrder: number
 }
 
 export interface CreateMeetingRoomInput {
   name: string
-  capacity: number | null
-  equipment: string | null
+  memo: string | null
 }
 
 export interface UpdateMeetingRoomInput {
   name?: string
-  capacity?: number | null
-  equipment?: string | null
+  memo?: string | null
+}
+
+export interface RoomOrderEntry {
+  roomId: number
+  displayOrder: number
 }
 
 export interface Reservation {
@@ -42,11 +45,13 @@ export interface UpdateReservationInput {
 }
 
 export interface RoomRepository {
+  /** display_orderの昇順で返す */
   listAll(): Promise<MeetingRoom[]>
   findById(roomId: number): Promise<MeetingRoom | undefined>
   create(input: CreateMeetingRoomInput): Promise<MeetingRoom>
   update(roomId: number, input: UpdateMeetingRoomInput): Promise<MeetingRoom>
   delete(roomId: number): Promise<void>
+  setOrder(orders: RoomOrderEntry[]): Promise<void>
 }
 
 export interface ReservationRepository {

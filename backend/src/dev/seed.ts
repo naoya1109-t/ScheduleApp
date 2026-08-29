@@ -165,8 +165,8 @@ export async function seedDevData() {
     permalinkSlug: "sample-slug-2",
   })
 
-  const room1 = await roomRepository.create({ name: "会議室A", capacity: 6, equipment: "モニター" })
-  await roomRepository.create({ name: "会議室B", capacity: 4, equipment: null })
+  const room1 = await roomRepository.create({ name: "会議室A", memo: "定員6名・モニターあり" })
+  await roomRepository.create({ name: "会議室B", memo: "定員4名" })
   await reservationRepository.createWithConflictCheck({
     roomId: room1.roomId,
     reserverId: staffA.userId,

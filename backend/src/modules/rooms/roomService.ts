@@ -6,6 +6,7 @@ import type {
   MeetingRoom,
   Reservation,
   ReservationRepository,
+  RoomOrderEntry,
   RoomRepository,
   UpdateMeetingRoomInput,
   UpdateReservationInput,
@@ -46,6 +47,11 @@ export class RoomService {
       throw new HttpError(409, "この会議室には予約が存在するため削除できません")
     }
     await this.roomRepository.delete(roomId)
+  }
+
+  async updateRoomOrder(orders: RoomOrderEntry[]): Promise<MeetingRoom[]> {
+    await this.roomRepository.setOrder(orders)
+    return this.roomRepository.listAll()
   }
 
   async listReservations(roomId: number | null, from: string, to: string): Promise<Reservation[]> {

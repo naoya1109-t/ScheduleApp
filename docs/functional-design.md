@@ -125,8 +125,8 @@ erDiagram
     MEETING_ROOM {
         string room_id PK
         string name
-        int capacity
-        string equipment
+        string memo
+        int display_order
     }
     ROOM_RESERVATION {
         string reservation_id PK

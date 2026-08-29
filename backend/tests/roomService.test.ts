@@ -16,7 +16,7 @@ function setup() {
 describe("RoomService", () => {
   it("同一会議室・同一時間帯への重複予約はエラーになる", async () => {
     const { roomRepository, service } = setup()
-    const room = await roomRepository.create({ name: "会議室A", capacity: 6, equipment: null })
+    const room = await roomRepository.create({ name: "会議室A", memo: null })
 
     await service.createReservation({
       roomId: room.roomId,
@@ -39,7 +39,7 @@ describe("RoomService", () => {
 
   it("時間帯が重ならなければ同じ会議室でも予約できる", async () => {
     const { roomRepository, service } = setup()
-    const room = await roomRepository.create({ name: "会議室A", capacity: 6, equipment: null })
+    const room = await roomRepository.create({ name: "会議室A", memo: null })
 
     await service.createReservation({
       roomId: room.roomId,
@@ -62,8 +62,8 @@ describe("RoomService", () => {
 
   it("別の会議室であれば同じ時間帯でも予約できる", async () => {
     const { roomRepository, service } = setup()
-    const roomA = await roomRepository.create({ name: "会議室A", capacity: 6, equipment: null })
-    const roomB = await roomRepository.create({ name: "会議室B", capacity: 4, equipment: null })
+    const roomA = await roomRepository.create({ name: "会議室A", memo: null })
+    const roomB = await roomRepository.create({ name: "会議室B", memo: null })
 
     await service.createReservation({
       roomId: roomA.roomId,
@@ -86,7 +86,7 @@ describe("RoomService", () => {
 
   it("予約作成時に予約者のカレンダーへ連動する予定が作成される", async () => {
     const { roomRepository, eventRepository, service } = setup()
-    const room = await roomRepository.create({ name: "会議室A", capacity: 6, equipment: null })
+    const room = await roomRepository.create({ name: "会議室A", memo: null })
 
     const reservation = await service.createReservation({
       roomId: room.roomId,
@@ -104,7 +104,7 @@ describe("RoomService", () => {
 
   it("予約を取り消すと連動していたカレンダー予定も削除される", async () => {
     const { roomRepository, eventRepository, service } = setup()
-    const room = await roomRepository.create({ name: "会議室A", capacity: 6, equipment: null })
+    const room = await roomRepository.create({ name: "会議室A", memo: null })
     const reservation = await service.createReservation({
       roomId: room.roomId,
       reserverId: 1,
@@ -120,7 +120,7 @@ describe("RoomService", () => {
 
   it("予約者本人以外(一般社員)は予約を変更・取消できない", async () => {
     const { roomRepository, service } = setup()
-    const room = await roomRepository.create({ name: "会議室A", capacity: 6, equipment: null })
+    const room = await roomRepository.create({ name: "会議室A", memo: null })
     const reservation = await service.createReservation({
       roomId: room.roomId,
       reserverId: 1,
@@ -137,7 +137,7 @@ describe("RoomService", () => {
 
   it("管理者は他人の予約でも変更・取消できる", async () => {
     const { roomRepository, service } = setup()
-    const room = await roomRepository.create({ name: "会議室A", capacity: 6, equipment: null })
+    const room = await roomRepository.create({ name: "会議室A", memo: null })
     const reservation = await service.createReservation({
       roomId: room.roomId,
       reserverId: 1,
@@ -151,13 +151,12 @@ describe("RoomService", () => {
 
   it("会議室情報を更新できる", async () => {
     const { roomRepository, service } = setup()
-    const room = await roomRepository.create({ name: "会議室A", capacity: 6, equipment: null })
+    const room = await roomRepository.create({ name: "会議室A", memo: null })
 
-    const updated = await service.updateRoom(room.roomId, { name: "会議室A(改装)", capacity: 8 })
+    const updated = await service.updateRoom(room.roomId, { name: "会議室A(改装)", memo: "定員8名に増床" })
 
     expect(updated.name).toBe("会議室A(改装)")
-    expect(updated.capacity).toBe(8)
-    expect(updated.equipment).toBeNull()
+    expect(updated.memo).toBe("定員8名に増床")
   })
 
   it("存在しない会議室を更新しようとするとエラーになる", async () => {
@@ -167,7 +166,7 @@ describe("RoomService", () => {
 
   it("予約のない会議室は削除できる", async () => {
     const { roomRepository, service } = setup()
-    const room = await roomRepository.create({ name: "会議室A", capacity: 6, equipment: null })
+    const room = await roomRepository.create({ name: "会議室A", memo: null })
 
     await service.deleteRoom(room.roomId)
 
@@ -176,7 +175,7 @@ describe("RoomService", () => {
 
   it("予約が存在する会議室は削除できない", async () => {
     const { roomRepository, service } = setup()
-    const room = await roomRepository.create({ name: "会議室A", capacity: 6, equipment: null })
+    const room = await roomRepository.create({ name: "会議室A", memo: null })
     await service.createReservation({
       roomId: room.roomId,
       reserverId: 1,
@@ -186,5 +185,18 @@ describe("RoomService", () => {
     })
 
     await expect(service.deleteRoom(room.roomId)).rejects.toThrow(HttpError)
+  })
+
+  it("会議室の表示順を並び替えられる", async () => {
+    const { roomRepository, service } = setup()
+    const roomA = await roomRepository.create({ name: "会議室A", memo: null })
+    const roomB = await roomRepository.create({ name: "会議室B", memo: null })
+
+    const reordered = await service.updateRoomOrder([
+      { roomId: roomB.roomId, displayOrder: 1 },
+      { roomId: roomA.roomId, displayOrder: 2 },
+    ])
+
+    expect(reordered.map((room) => room.roomId)).toEqual([roomB.roomId, roomA.roomId])
   })
 })

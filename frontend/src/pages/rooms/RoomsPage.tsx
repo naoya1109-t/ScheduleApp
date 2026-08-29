@@ -92,7 +92,7 @@ export function RoomsPage() {
           {rooms.map((room) => (
             <option key={room.roomId} value={room.roomId}>
               {room.name}
-              {room.capacity ? `(定員${room.capacity}名)` : ""}
+              {room.memo ? `(${room.memo})` : ""}
             </option>
           ))}
         </select>

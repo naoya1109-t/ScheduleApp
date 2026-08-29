@@ -1,8 +1,8 @@
 import { useEffect, useState, type FormEvent } from "react"
 import { ApiError } from "../../../api/client"
-import { createRoom, deleteRoom, listRooms, updateRoom, type MeetingRoom } from "../../../api/rooms"
+import { createRoom, deleteRoom, listRooms, updateRoom, updateRoomOrder, type MeetingRoom } from "../../../api/rooms"
 
-const emptyNewRoom = { name: "", capacity: "", equipment: "" }
+const emptyNewRoom = { name: "", memo: "" }
 
 export function RoomsAdminPage() {
   const [rooms, setRooms] = useState<MeetingRoom[]>([])
@@ -10,6 +10,7 @@ export function RoomsAdminPage() {
   const [editingRoomId, setEditingRoomId] = useState<number | null>(null)
   const [editForm, setEditForm] = useState(emptyNewRoom)
   const [error, setError] = useState<string | null>(null)
+  const [orderSaved, setOrderSaved] = useState(false)
 
   async function reload() {
     setRooms(await listRooms())
@@ -29,11 +30,7 @@ export function RoomsAdminPage() {
     event.preventDefault()
     setError(null)
     try {
-      await createRoom({
-        name: newRoom.name,
-        capacity: newRoom.capacity ? Number(newRoom.capacity) : null,
-        equipment: newRoom.equipment || null,
-      })
+      await createRoom({ name: newRoom.name, memo: newRoom.memo || null })
       setNewRoom(emptyNewRoom)
       await reload()
     } catch (err) {
@@ -43,22 +40,14 @@ export function RoomsAdminPage() {
 
   function startEdit(room: MeetingRoom) {
     setEditingRoomId(room.roomId)
-    setEditForm({
-      name: room.name,
-      capacity: room.capacity !== null ? String(room.capacity) : "",
-      equipment: room.equipment ?? "",
-    })
+    setEditForm({ name: room.name, memo: room.memo ?? "" })
   }
 
   async function handleUpdate(event: FormEvent, roomId: number) {
     event.preventDefault()
     setError(null)
     try {
-      await updateRoom(roomId, {
-        name: editForm.name,
-        capacity: editForm.capacity ? Number(editForm.capacity) : null,
-        equipment: editForm.equipment || null,
-      })
+      await updateRoom(roomId, { name: editForm.name, memo: editForm.memo || null })
       setEditingRoomId(null)
       await reload()
     } catch (err) {
@@ -73,6 +62,29 @@ export function RoomsAdminPage() {
       await reload()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "会議室の削除に失敗しました")
+    }
+  }
+
+  function moveRoom(index: number, direction: -1 | 1) {
+    setRooms((prev) => {
+      const next = [...prev]
+      const targetIndex = index + direction
+      if (targetIndex < 0 || targetIndex >= next.length) return prev
+      ;[next[index], next[targetIndex]] = [next[targetIndex], next[index]]
+      return next
+    })
+  }
+
+  async function handleSaveOrder() {
+    setError(null)
+    try {
+      const orders = rooms.map((room, index) => ({ roomId: room.roomId, displayOrder: index + 1 }))
+      const updated = await updateRoomOrder(orders)
+      setRooms(updated)
+      setOrderSaved(true)
+      setTimeout(() => setOrderSaved(false), 2000)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "並び順の保存に失敗しました")
     }
   }
 
@@ -93,21 +105,13 @@ export function RoomsAdminPage() {
             required
           />
         </div>
-        <div>
-          <label className="mb-1 block text-[11.5px] font-bold text-text-soft">定員</label>
+        <div className="flex-1">
+          <label className="mb-1 block text-[11.5px] font-bold text-text-soft">メモ</label>
           <input
-            className="w-20 rounded-md border border-border px-3 py-2 text-sm"
-            value={newRoom.capacity}
-            onChange={(e) => setNewRoom({ ...newRoom, capacity: e.target.value })}
-            inputMode="numeric"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-[11.5px] font-bold text-text-soft">設備</label>
-          <input
-            className="w-32 rounded-md border border-border px-3 py-2 text-sm"
-            value={newRoom.equipment}
-            onChange={(e) => setNewRoom({ ...newRoom, equipment: e.target.value })}
+            className="w-full rounded-md border border-border px-3 py-2 text-sm"
+            value={newRoom.memo}
+            onChange={(e) => setNewRoom({ ...newRoom, memo: e.target.value })}
+            placeholder="定員・設備など"
           />
         </div>
         <button type="submit" className="rounded-md bg-indigo px-4 py-2 text-sm font-bold text-white">
@@ -117,8 +121,8 @@ export function RoomsAdminPage() {
 
       {error && <p className="mb-4 text-sm text-coral">{error}</p>}
 
-      <div className="flex flex-col gap-2">
-        {rooms.map((room) =>
+      <div className="mb-4 flex flex-col gap-2">
+        {rooms.map((room, index) =>
           editingRoomId === room.roomId ? (
             <form
               key={room.roomId}
@@ -134,21 +138,12 @@ export function RoomsAdminPage() {
                   required
                 />
               </div>
-              <div>
-                <label className="mb-1 block text-[11px] font-bold text-text-soft">定員</label>
+              <div className="flex-1">
+                <label className="mb-1 block text-[11px] font-bold text-text-soft">メモ</label>
                 <input
-                  className="w-20 rounded-md border border-border px-3 py-1.5 text-sm"
-                  value={editForm.capacity}
-                  onChange={(e) => setEditForm({ ...editForm, capacity: e.target.value })}
-                  inputMode="numeric"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-[11px] font-bold text-text-soft">設備</label>
-                <input
-                  className="w-32 rounded-md border border-border px-3 py-1.5 text-sm"
-                  value={editForm.equipment}
-                  onChange={(e) => setEditForm({ ...editForm, equipment: e.target.value })}
+                  className="w-full rounded-md border border-border px-3 py-1.5 text-sm"
+                  value={editForm.memo}
+                  onChange={(e) => setEditForm({ ...editForm, memo: e.target.value })}
                 />
               </div>
               <button type="submit" className="rounded-md bg-indigo px-3 py-1.5 text-[12px] font-bold text-white">
@@ -168,12 +163,27 @@ export function RoomsAdminPage() {
               className="flex items-center justify-between rounded-md border border-border bg-surface px-4 py-3 text-sm"
             >
               <div>
-                <span className="font-bold">{room.name}</span>
-                {room.capacity !== null && <span className="ml-3 text-text-soft">定員{room.capacity}名</span>}
-                {room.equipment && <span className="ml-3 text-text-soft">設備: {room.equipment}</span>}
+                <span className="font-bold">
+                  {index + 1}. {room.name}
+                </span>
+                {room.memo && <span className="ml-3 text-text-soft">{room.memo}</span>}
               </div>
-              <div className="flex items-center gap-3">
-                <button onClick={() => startEdit(room)} className="text-indigo">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => moveRoom(index, -1)}
+                  disabled={index === 0}
+                  className="rounded-md border border-border px-2 py-1 text-[12px] disabled:opacity-40"
+                >
+                  ↑
+                </button>
+                <button
+                  onClick={() => moveRoom(index, 1)}
+                  disabled={index === rooms.length - 1}
+                  className="rounded-md border border-border px-2 py-1 text-[12px] disabled:opacity-40"
+                >
+                  ↓
+                </button>
+                <button onClick={() => startEdit(room)} className="ml-2 text-indigo">
                   編集
                 </button>
                 <button onClick={() => handleDelete(room.roomId)} className="text-coral">
@@ -185,6 +195,12 @@ export function RoomsAdminPage() {
         )}
         {rooms.length === 0 && <p className="text-text-soft">会議室はまだ登録されていません。</p>}
       </div>
+
+      {rooms.length > 0 && (
+        <button onClick={handleSaveOrder} className="rounded-md bg-indigo px-4 py-2 text-sm font-bold text-white">
+          {orderSaved ? "保存しました" : "この順序で保存"}
+        </button>
+      )}
     </div>
   )
 }

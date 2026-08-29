@@ -20,17 +20,30 @@ export function createRoomRoutes(roomService: RoomService): Router {
     "/",
     requireAdmin,
     asyncHandler(async (req, res) => {
-      const { name, capacity, equipment } = req.body
+      const { name, memo } = req.body
       if (!name) {
         res.status(400).json({ message: "name は必須です" })
         return
       }
       const created = await roomService.createRoom({
         name,
-        capacity: capacity ?? null,
-        equipment: equipment ?? null,
+        memo: memo ?? null,
       })
       res.status(201).json(created)
+    }),
+  )
+
+  router.put(
+    "/order",
+    requireAdmin,
+    asyncHandler(async (req, res) => {
+      const { orders } = req.body
+      if (!Array.isArray(orders)) {
+        res.status(400).json({ message: "orders は必須です" })
+        return
+      }
+      const updated = await roomService.updateRoomOrder(orders)
+      res.json(updated)
     }),
   )
 
@@ -39,8 +52,8 @@ export function createRoomRoutes(roomService: RoomService): Router {
     requireAdmin,
     asyncHandler(async (req, res) => {
       const roomId = Number(req.params.roomId)
-      const { name, capacity, equipment } = req.body
-      const updated = await roomService.updateRoom(roomId, { name, capacity, equipment })
+      const { name, memo } = req.body
+      const updated = await roomService.updateRoom(roomId, { name, memo })
       res.json(updated)
     }),
   )
