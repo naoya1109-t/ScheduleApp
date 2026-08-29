@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { useParams } from "react-router-dom"
 import {
   addComment,
@@ -13,6 +13,7 @@ import {
   type Comment,
   type Post,
 } from "../../api/posts"
+import { FileDropZone } from "../../components/FileDropZone"
 
 export function PostDetailPage() {
   const { postId } = useParams<{ postId: string }>()
@@ -21,7 +22,6 @@ export function PostDetailPage() {
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [commentBody, setCommentBody] = useState("")
   const [copied, setCopied] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!postId) return
@@ -59,10 +59,12 @@ export function PostDetailPage() {
     })
   }
 
-  async function handleUploadAttachment(file: File) {
+  async function handleUploadAttachments(files: File[]) {
     if (!postId) return
-    const created = await uploadAttachment(Number(postId), file)
-    setAttachments((prev) => [...prev, created])
+    for (const file of files) {
+      const created = await uploadAttachment(Number(postId), file)
+      setAttachments((prev) => [...prev, created])
+    }
   }
 
   async function handleDeleteAttachment(attachmentId: number) {
@@ -95,24 +97,11 @@ export function PostDetailPage() {
       />
 
       <div className="mb-8 rounded-[14px] border border-border bg-surface p-6">
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3">
           <h2 className="text-[13.5px] font-bold">添付ファイル</h2>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="rounded-md border border-border px-3 py-1.5 text-[12px] font-bold text-text-soft"
-          >
-            ファイルを追加
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              if (file) handleUploadAttachment(file)
-              e.target.value = ""
-            }}
-          />
+        </div>
+        <div className="mb-3">
+          <FileDropZone multiple onFilesSelected={handleUploadAttachments} />
         </div>
         <div className="flex flex-col gap-2">
           {attachments.map((attachment) => (

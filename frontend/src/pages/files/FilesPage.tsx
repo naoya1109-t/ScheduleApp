@@ -12,6 +12,7 @@ import {
   type FileItem,
   type Folder,
 } from "../../api/files"
+import { FileDropZone } from "../../components/FileDropZone"
 
 export function FilesPage() {
   const [path, setPath] = useState<Folder[]>([])
@@ -19,7 +20,6 @@ export function FilesPage() {
   const [files, setFiles] = useState<FileItem[]>([])
   const [newFolderName, setNewFolderName] = useState("")
   const [error, setError] = useState<string | null>(null)
-  const uploadInputRef = useRef<HTMLInputElement>(null)
   const versionInputRefs = useRef(new Map<number, HTMLInputElement>())
 
   const currentFolderId = path.length > 0 ? path[path.length - 1].folderId : null
@@ -55,13 +55,12 @@ export function FilesPage() {
     await reload()
   }
 
-  async function handleUpload() {
-    const file = uploadInputRef.current?.files?.[0]
+  async function handleUpload(fileList: File[]) {
+    const file = fileList[0]
     if (!file || currentFolderId === null) return
     setError(null)
     try {
       await uploadFile(currentFolderId, file)
-      if (uploadInputRef.current) uploadInputRef.current.value = ""
       await reload()
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "アップロードに失敗しました")
@@ -131,11 +130,11 @@ export function FilesPage() {
 
       {currentFolderId !== null && (
         <>
-          <div className="mb-6 flex items-center gap-3 rounded-[14px] border border-border bg-surface p-4">
-            <input ref={uploadInputRef} type="file" className="text-sm" />
-            <button onClick={handleUpload} className="rounded-md bg-indigo px-3 py-1.5 text-[12px] font-bold text-white">
-              新規登録
-            </button>
+          <div className="mb-6 rounded-[14px] border border-border bg-surface p-4">
+            <FileDropZone
+              onFilesSelected={handleUpload}
+              label="ここにファイルをドラッグ&ドロップ、またはクリックして新規登録"
+            />
           </div>
           {error && <p className="mb-4 text-sm text-coral">{error}</p>}
 

@@ -1,7 +1,9 @@
-import { useState, type FormEvent } from "react"
+import { useEffect, useState, type FormEvent } from "react"
 import { useNavigate } from "react-router-dom"
 import { ApiError } from "../../api/client"
+import { listGroups, type Group } from "../../api/groups"
 import { createPost, uploadAttachment, type PostVisibilityScope } from "../../api/posts"
+import { FileDropZone } from "../../components/FileDropZone"
 import { RichTextEditor } from "../../components/RichTextEditor"
 
 export function NewPostPage() {
@@ -10,14 +12,14 @@ export function NewPostPage() {
   const [bodyHtml, setBodyHtml] = useState("")
   const [visibilityScope, setVisibilityScope] = useState<PostVisibilityScope>("company")
   const [groupId, setGroupId] = useState("")
+  const [groups, setGroups] = useState<Group[]>([])
   const [attachmentFiles, setAttachmentFiles] = useState<File[]>([])
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  function handleFileSelect(fileList: FileList | null) {
-    if (!fileList) return
-    setAttachmentFiles((prev) => [...prev, ...Array.from(fileList)])
-  }
+  useEffect(() => {
+    listGroups().then(setGroups)
+  }, [])
 
   function removeAttachment(index: number) {
     setAttachmentFiles((prev) => prev.filter((_, i) => i !== index))
@@ -67,43 +69,34 @@ export function NewPostPage() {
           <RichTextEditor value={bodyHtml} onChange={setBodyHtml} />
         </div>
 
-        <div className="flex gap-4">
-          <div>
-            <label className="mb-1 block text-[11.5px] font-bold text-text-soft">公開範囲</label>
-            <select
-              className="rounded-md border border-border px-3 py-2 text-sm"
-              value={visibilityScope}
-              onChange={(e) => setVisibilityScope(e.target.value as PostVisibilityScope)}
-            >
-              <option value="company">全社</option>
-              <option value="group">部署別</option>
-            </select>
-          </div>
-          {visibilityScope === "group" && (
-            <div>
-              <label className="mb-1 block text-[11.5px] font-bold text-text-soft">部署ID</label>
-              <input
-                className="rounded-md border border-border px-3 py-2 text-sm"
-                value={groupId}
-                onChange={(e) => setGroupId(e.target.value)}
-                inputMode="numeric"
-                required
-              />
-            </div>
-          )}
+        <div>
+          <label className="mb-1 block text-[11.5px] font-bold text-text-soft">公開範囲</label>
+          <select
+            className="rounded-md border border-border px-3 py-2 text-sm"
+            value={visibilityScope === "group" ? `group:${groupId}` : "company"}
+            onChange={(e) => {
+              const value = e.target.value
+              if (value === "company") {
+                setVisibilityScope("company")
+                setGroupId("")
+              } else {
+                setVisibilityScope("group")
+                setGroupId(value.slice("group:".length))
+              }
+            }}
+          >
+            <option value="company">全社</option>
+            {groups.map((group) => (
+              <option key={group.groupId} value={`group:${group.groupId}`}>
+                {group.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>
           <label className="mb-1 block text-[11.5px] font-bold text-text-soft">添付ファイル(任意)</label>
-          <input
-            type="file"
-            multiple
-            className="text-sm"
-            onChange={(e) => {
-              handleFileSelect(e.target.files)
-              e.target.value = ""
-            }}
-          />
+          <FileDropZone multiple onFilesSelected={(files) => setAttachmentFiles((prev) => [...prev, ...files])} />
           {attachmentFiles.length > 0 && (
             <ul className="mt-2 flex flex-col gap-1">
               {attachmentFiles.map((file, index) => (
