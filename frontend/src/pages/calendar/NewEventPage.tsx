@@ -41,7 +41,15 @@ const emptyForm = {
 
 type TimelineItem =
   | { kind: "event"; key: string; sortKey: string; occurrence: VisibleOccurrence }
-  | { kind: "holiday"; key: string; sortKey: string; label: string; name: string }
+  | {
+      kind: "holiday"
+      key: string
+      sortKey: string
+      label: string
+      name: string
+      eventId?: number
+      ownerId?: number
+    }
 
 export function NewEventPage() {
   const { user } = useAuth()
@@ -149,6 +157,8 @@ export function NewEventPage() {
       sortKey: occurrence.startAt,
       label: "会社休日",
       name: occurrence.title ?? "",
+      eventId: occurrence.eventId,
+      ownerId: occurrence.ownerId,
     })),
     ...events.map((occurrence) => ({
       kind: "event" as const,
@@ -283,26 +293,49 @@ export function NewEventPage() {
       </form>
 
       <div className="flex flex-col gap-2">
-        {timeline.map((item) =>
-          item.kind === "holiday" ? (
-            <div
-              key={item.key}
-              className="flex items-center gap-3 rounded-md border border-coral-soft bg-coral-soft px-4 py-3 text-sm"
-            >
-              <span className="rounded bg-coral px-1.5 py-0.5 text-[10px] font-bold text-white">
-                {item.label}
-              </span>
-              <span className="font-bold">{item.name}</span>
-            </div>
-          ) : (
+        {timeline.map((item) => {
+          if (item.kind === "holiday") {
+            const canEdit =
+              item.eventId !== undefined && (user?.role === "admin" || item.ownerId === user?.userId)
+            return (
+              <div
+                key={item.key}
+                className="flex items-center gap-3 rounded-md border border-coral-soft bg-coral-soft px-4 py-3 text-sm"
+              >
+                <span className="rounded bg-coral px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  {item.label}
+                </span>
+                {canEdit ? (
+                  <Link
+                    to={`/calendar/events/${item.eventId}/edit`}
+                    className="font-bold underline decoration-dotted underline-offset-2"
+                  >
+                    {item.name}
+                  </Link>
+                ) : (
+                  <span className="font-bold">{item.name}</span>
+                )}
+              </div>
+            )
+          }
+          return (
             <div
               key={item.key}
               className="flex items-center justify-between rounded-md border border-border bg-surface px-4 py-3 text-sm"
             >
               <div>
-                <span className="font-bold">
-                  {item.occurrence.isBusyOnly ? "予定あり" : item.occurrence.title}
-                </span>
+                {item.occurrence.isOwnEvent ? (
+                  <Link
+                    to={`/calendar/events/${item.occurrence.eventId}/edit`}
+                    className="font-bold underline decoration-dotted underline-offset-2"
+                  >
+                    {item.occurrence.isBusyOnly ? "予定あり" : item.occurrence.title}
+                  </Link>
+                ) : (
+                  <span className="font-bold">
+                    {item.occurrence.isBusyOnly ? "予定あり" : item.occurrence.title}
+                  </span>
+                )}
                 <span className="ml-3 text-text-soft">
                   {new Date(item.occurrence.startAt).toLocaleString("ja-JP")} 〜{" "}
                   {new Date(item.occurrence.endAt).toLocaleString("ja-JP")}
@@ -314,8 +347,8 @@ export function NewEventPage() {
                 </button>
               )}
             </div>
-          ),
-        )}
+          )
+        })}
         {timeline.length === 0 && <p className="text-text-soft">予定はまだありません。</p>}
       </div>
     </div>

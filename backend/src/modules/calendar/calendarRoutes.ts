@@ -79,6 +79,15 @@ export function createCalendarRoutes(calendarService: CalendarService): Router {
     }),
   )
 
+  router.get(
+    "/events/:eventId",
+    asyncHandler(async (req, res) => {
+      const eventId = Number(req.params.eventId)
+      const event = await calendarService.getEvent(eventId, req.session.userId!, req.session.role!)
+      res.json(event)
+    }),
+  )
+
   router.put(
     "/events/:eventId",
     asyncHandler(async (req, res) => {

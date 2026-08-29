@@ -14,6 +14,19 @@ export interface VisibleOccurrence {
   title: string | null
 }
 
+export interface CalendarEvent {
+  eventId: number
+  ownerId: number
+  title: string
+  startAt: string
+  endAt: string
+  visibility: EventVisibility
+  isHidden: boolean
+  isRecurring: boolean
+  recurrenceRule: RecurrenceRule
+  eventType: CalendarEventType
+}
+
 export interface CreatePersonalEventInput {
   title: string
   startAt: string
@@ -44,6 +57,17 @@ export function listCompanyHolidays(from: string, to: string): Promise<VisibleOc
 export function createEvent(input: CreatePersonalEventInput | CreateCompanyHolidayInput) {
   return apiFetch("/api/calendar/events", {
     method: "POST",
+    body: JSON.stringify(input),
+  })
+}
+
+export function getEvent(eventId: number): Promise<CalendarEvent> {
+  return apiFetch<CalendarEvent>(`/api/calendar/events/${eventId}`)
+}
+
+export function updateEvent(eventId: number, input: Partial<CreatePersonalEventInput>): Promise<CalendarEvent> {
+  return apiFetch<CalendarEvent>(`/api/calendar/events/${eventId}`, {
+    method: "PUT",
     body: JSON.stringify(input),
   })
 }

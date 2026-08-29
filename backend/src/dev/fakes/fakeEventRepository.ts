@@ -33,7 +33,13 @@ export class FakeEventRepository implements EventRepository {
     if (!event) {
       throw new Error("予定が見つかりません")
     }
-    Object.assign(event, input)
+    if (input.title !== undefined) event.title = input.title
+    if (input.startAt !== undefined) event.startAt = input.startAt
+    if (input.endAt !== undefined) event.endAt = input.endAt
+    if (input.visibility !== undefined) event.visibility = input.visibility
+    if (input.isHidden !== undefined) event.isHidden = input.isHidden
+    if (input.isRecurring !== undefined) event.isRecurring = input.isRecurring
+    if (input.recurrenceRule !== undefined) event.recurrenceRule = input.recurrenceRule
     return event
   }
 

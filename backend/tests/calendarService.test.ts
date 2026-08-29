@@ -110,6 +110,40 @@ describe("CalendarService 公開対象・非表示のマスキングルール", 
     await expect(service.deleteEvent(created.eventId, 2, "general")).rejects.toThrow(HttpError)
   })
 
+  it("本人は編集用に予定の詳細を取得できる", async () => {
+    const { service } = setup()
+    const created = await service.createEvent({
+      ownerId: 1,
+      title: "予定",
+      startAt: "2026-09-02T09:00:00.000Z",
+      endAt: "2026-09-02T10:00:00.000Z",
+      visibility: "self",
+      isHidden: true,
+      isRecurring: false,
+      recurrenceRule: "none",
+    })
+
+    const fetched = await service.getEvent(created.eventId, 1, "general")
+    expect(fetched.title).toBe("予定")
+    expect(fetched.visibility).toBe("self")
+  })
+
+  it("本人以外は他人の予定の詳細を取得できない", async () => {
+    const { service } = setup()
+    const created = await service.createEvent({
+      ownerId: 1,
+      title: "予定",
+      startAt: "2026-09-02T09:00:00.000Z",
+      endAt: "2026-09-02T10:00:00.000Z",
+      visibility: "all",
+      isHidden: false,
+      isRecurring: false,
+      recurrenceRule: "none",
+    })
+
+    await expect(service.getEvent(created.eventId, 2, "general")).rejects.toThrow(HttpError)
+  })
+
   it("本人は公開対象・非表示設定を後から変更できる", async () => {
     const { service } = setup()
     const created = await service.createEvent({

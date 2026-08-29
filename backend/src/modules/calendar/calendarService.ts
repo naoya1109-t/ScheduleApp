@@ -36,6 +36,16 @@ export class CalendarService {
     return this.repository.create({ ...input, eventType: "personal" })
   }
 
+  /** 編集画面での事前表示用。閲覧できるのは変更権限を持つ本人(または会社休日の管理者)のみ */
+  async getEvent(eventId: number, callerId: number, callerRole: CallerRole): Promise<CalendarEvent> {
+    const event = await this.repository.findById(eventId)
+    if (!event) {
+      throw new HttpError(404, "予定が見つかりません")
+    }
+    assertCanModify(event, callerId, callerRole)
+    return event
+  }
+
   async updateEvent(eventId: number, callerId: number, callerRole: CallerRole, input: UpdateEventInput) {
     const event = await this.repository.findById(eventId)
     if (!event) {

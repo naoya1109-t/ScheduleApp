@@ -153,16 +153,31 @@ export function WeeklySchedule() {
                     isSameDay(day, today) ? "bg-indigo-soft" : "bg-white"
                   }`}
                 >
-                  {dayOccurrences.map((occurrence) => (
-                    <div key={occurrence.eventId} className="flex items-center gap-1.5 text-[11px]">
-                      <span className="h-1.5 w-1.5 shrink-0 rounded-sm bg-indigo" />
-                      {new Date(occurrence.startAt).toLocaleTimeString("ja-JP", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}{" "}
-                      {occurrence.isBusyOnly ? "予定あり" : occurrence.title}
-                    </div>
-                  ))}
+                  {dayOccurrences.map((occurrence) =>
+                    occurrence.isOwnEvent ? (
+                      <Link
+                        key={occurrence.eventId}
+                        to={`/calendar/events/${occurrence.eventId}/edit`}
+                        className="flex items-center gap-1.5 text-[11px] underline decoration-dotted underline-offset-2"
+                      >
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-sm bg-indigo" />
+                        {new Date(occurrence.startAt).toLocaleTimeString("ja-JP", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}{" "}
+                        {occurrence.isBusyOnly ? "予定あり" : occurrence.title}
+                      </Link>
+                    ) : (
+                      <div key={occurrence.eventId} className="flex items-center gap-1.5 text-[11px]">
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-sm bg-indigo" />
+                        {new Date(occurrence.startAt).toLocaleTimeString("ja-JP", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}{" "}
+                        {occurrence.isBusyOnly ? "予定あり" : occurrence.title}
+                      </div>
+                    ),
+                  )}
                 </div>
               )
             })}
