@@ -5,6 +5,7 @@ import { RequireAuth } from "./context/RequireAuth"
 import { LoginPage } from "./pages/login/LoginPage"
 import { AdminIndexPage } from "./pages/admin/AdminIndexPage"
 import { UsersPage } from "./pages/admin/users/UsersPage"
+import { NewUserPage } from "./pages/admin/users/NewUserPage"
 import { HolidaysPage } from "./pages/admin/holidays/HolidaysPage"
 import { BoardListPage } from "./pages/board/BoardListPage"
 import { CalendarPage } from "./pages/calendar/CalendarPage"
@@ -198,6 +199,16 @@ function App() {
             <RequireAuth adminOnly>
               <Layout>
                 <UsersPage />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/users/new"
+          element={
+            <RequireAuth adminOnly>
+              <Layout>
+                <NewUserPage />
               </Layout>
             </RequireAuth>
           }
