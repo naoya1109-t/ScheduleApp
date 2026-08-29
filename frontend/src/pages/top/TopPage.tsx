@@ -5,6 +5,7 @@ import { listRecentFiles, type FileItem } from "../../api/files"
 import { listGroups, listMyGroups, type Group } from "../../api/groups"
 import { listPosts, type PostSummary } from "../../api/posts"
 import { getTopPageSettings, getWeekGantt, type WeekGanttRow } from "../../api/topPage"
+import { UserInfoModal } from "../../components/UserInfoModal"
 
 const WEEKDAY_LABELS = ["月", "火", "水", "木", "金", "土", "日"]
 
@@ -60,6 +61,7 @@ export function TopPage() {
   const [files, setFiles] = useState<FileItem[]>([])
   const [boardCount, setBoardCount] = useState(5)
   const [fileCount, setFileCount] = useState(5)
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null)
 
   const today = startOfToday()
   const days = Array.from({ length: 7 }, (_, i) => addDays(anchor, i))
@@ -204,10 +206,13 @@ export function TopPage() {
             {rows.map((row) => (
               <Fragment key={row.userId}>
                 <div className="flex flex-col gap-1.5 justify-center border-b border-r border-border p-2">
-                  <div className="flex items-center gap-1.5 text-[13px] font-bold">
+                  <button
+                    onClick={() => setSelectedUserId(row.userId)}
+                    className="flex items-center gap-1.5 text-left text-[13px] font-bold text-text underline decoration-dotted underline-offset-2"
+                  >
                     {row.isSelf && <span className="h-1.5 w-1.5 rounded-full bg-indigo" />}
                     {row.name}
-                  </div>
+                  </button>
                   <Link
                     to={`/calendar/month/${row.userId}`}
                     className="w-fit rounded-md border border-border bg-surface-alt px-2 py-0.5 text-[10.5px] text-text-soft"
@@ -297,6 +302,10 @@ export function TopPage() {
           </div>
         </div>
       </div>
+
+      {selectedUserId !== null && (
+        <UserInfoModal userId={selectedUserId} onClose={() => setSelectedUserId(null)} />
+      )}
     </div>
   )
 }

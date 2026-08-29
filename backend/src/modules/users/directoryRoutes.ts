@@ -16,5 +16,18 @@ export function createDirectoryRoutes(userService: UserService): Router {
     }),
   )
 
+  router.get(
+    "/:userId",
+    asyncHandler(async (req, res) => {
+      const userId = Number(req.params.userId)
+      const user = await userService.getDirectoryUser(userId)
+      if (!user) {
+        res.status(404).json({ message: "利用者が見つかりません" })
+        return
+      }
+      res.json(user)
+    }),
+  )
+
   return router
 }

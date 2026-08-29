@@ -16,6 +16,27 @@ export class UserService {
     return users.filter((user) => user.status === "active").map((user) => ({ userId: user.userId, name: user.name }))
   }
 
+  /** トップ画面のスケジュール等から、氏名クリックで連絡先を確認するための最小限のプロフィール */
+  async getDirectoryUser(userId: number): Promise<{
+    userId: number
+    name: string
+    email: string | null
+    employeeNo: string | null
+    jobTitleId: number | null
+  } | undefined> {
+    const user = await this.repository.findById(userId)
+    if (!user || user.status !== "active") {
+      return undefined
+    }
+    return {
+      userId: user.userId,
+      name: user.name,
+      email: user.email,
+      employeeNo: user.employeeNo,
+      jobTitleId: user.jobTitleId,
+    }
+  }
+
   async createUser(input: CreateUserInput): Promise<UserSummary> {
     const passwordHash = await bcrypt.hash(input.password, SALT_ROUNDS)
     return this.repository.create({

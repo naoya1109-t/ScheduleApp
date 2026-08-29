@@ -54,4 +54,42 @@ describe("UserService", () => {
     const users = await service.listUsers()
     expect(users[0]).not.toHaveProperty("passwordHash")
   })
+
+  it("在籍中の利用者はディレクトリ詳細を取得でき、パスワードハッシュを含まない", async () => {
+    const repository = new FakeUserRepository()
+    const service = new UserService(repository)
+    const created = await service.createUser({
+      loginId: "taro",
+      password: "password123",
+      name: "山田太郎",
+      email: "taro@example.com",
+      employeeNo: "0001",
+      role: "general",
+      groupIds: [],
+    })
+
+    const directoryUser = await service.getDirectoryUser(created.userId)
+    expect(directoryUser).toEqual({
+      userId: created.userId,
+      name: "山田太郎",
+      email: "taro@example.com",
+      employeeNo: "0001",
+      jobTitleId: null,
+    })
+  })
+
+  it("退職済みの利用者のディレクトリ詳細はundefinedになる", async () => {
+    const repository = new FakeUserRepository()
+    const service = new UserService(repository)
+    const created = await service.createUser({
+      loginId: "taro",
+      password: "password123",
+      name: "山田太郎",
+      role: "general",
+      groupIds: [],
+    })
+    await service.retireUser(created.userId)
+
+    expect(await service.getDirectoryUser(created.userId)).toBeUndefined()
+  })
 })
