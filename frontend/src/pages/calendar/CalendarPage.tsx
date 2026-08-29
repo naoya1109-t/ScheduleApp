@@ -10,6 +10,7 @@ import {
   type VisibleOccurrence,
 } from "../../api/calendar"
 import { listHolidaysInRange, type Holiday } from "../../api/holidays"
+import { createReservation, listRooms, type MeetingRoom } from "../../api/rooms"
 import { useAuth } from "../../context/AuthContext"
 
 function rangeIso(): { from: string; to: string; fromDate: string; toDate: string } {
@@ -34,6 +35,7 @@ const emptyForm = {
   isRecurring: false,
   recurrenceRule: "weekly" as RecurrenceRule,
   isCompanyHoliday: false,
+  roomId: "",
 }
 
 type TimelineItem =
@@ -45,8 +47,13 @@ export function CalendarPage() {
   const [events, setEvents] = useState<VisibleOccurrence[]>([])
   const [companyHolidays, setCompanyHolidays] = useState<VisibleOccurrence[]>([])
   const [holidays, setHolidays] = useState<Holiday[]>([])
+  const [rooms, setRooms] = useState<MeetingRoom[]>([])
   const [form, setForm] = useState(emptyForm)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    listRooms().then(setRooms)
+  }, [])
 
   async function reload() {
     if (!user) return
@@ -96,6 +103,13 @@ export function CalendarPage() {
           startAt: new Date(form.startAt).toISOString(),
           endAt: new Date(form.endAt).toISOString(),
           eventType: "company_holiday",
+        })
+      } else if (form.roomId) {
+        await createReservation({
+          roomId: Number(form.roomId),
+          title: form.title,
+          startAt: new Date(form.startAt).toISOString(),
+          endAt: new Date(form.endAt).toISOString(),
         })
       } else {
         await createEvent({
@@ -193,6 +207,29 @@ export function CalendarPage() {
         </label>
 
         {!form.isCompanyHoliday && (
+          <div>
+            <label className="mb-1 block text-[11.5px] font-bold text-text-soft">会議室(任意)</label>
+            <select
+              className="rounded-md border border-border px-3 py-2 text-sm"
+              value={form.roomId}
+              onChange={(e) => setForm({ ...form, roomId: e.target.value })}
+            >
+              <option value="">選択しない</option>
+              {rooms.map((room) => (
+                <option key={room.roomId} value={room.roomId}>
+                  {room.name}
+                </option>
+              ))}
+            </select>
+            {form.roomId && (
+              <p className="mt-1 text-[11px] text-text-soft">
+                会議室を選択した場合、公開対象「全員」・非表示なし・繰り返しなしで登録されます。
+              </p>
+            )}
+          </div>
+        )}
+
+        {!form.isCompanyHoliday && !form.roomId && (
           <div className="flex flex-wrap items-center gap-4">
             <div>
               <label className="mb-1 block text-[11.5px] font-bold text-text-soft">公開対象</label>
