@@ -2,8 +2,9 @@ import { Fragment, useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import type { VisibleOccurrence } from "../api/calendar"
 import { listGroups, listMyGroups, type Group } from "../api/groups"
+import { listHolidaysInRange, type Holiday } from "../api/holidays"
 import { getWeekGantt, type WeekGanttRow } from "../api/topPage"
-import { addDays, formatMd, isSameDay, startOfToday, WEEKDAY_LABELS } from "../utils/dateUtils"
+import { addDays, formatMd, isSameDay, startOfToday, toDateOnly, WEEKDAY_LABELS } from "../utils/dateUtils"
 import { UserInfoModal } from "./UserInfoModal"
 
 function occurrencesOnDay(occurrences: VisibleOccurrence[], day: Date): VisibleOccurrence[] {
@@ -15,10 +16,16 @@ export function WeeklySchedule() {
   const [groups, setGroups] = useState<Group[]>([])
   const [groupId, setGroupId] = useState<number | null>(null)
   const [rows, setRows] = useState<WeekGanttRow[]>([])
+  const [holidays, setHolidays] = useState<Holiday[]>([])
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null)
 
   const today = startOfToday()
   const days = Array.from({ length: 7 }, (_, i) => addDays(anchor, i))
+
+  function holidayOnDay(day: Date): Holiday | undefined {
+    const dateOnly = toDateOnly(day)
+    return holidays.find((holiday) => holiday.holidayDate === dateOnly)
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -54,6 +61,19 @@ export function WeeklySchedule() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId, anchor])
+
+  useEffect(() => {
+    let cancelled = false
+    listHolidaysInRange(toDateOnly(days[0]), toDateOnly(days[6]))
+      .then((data) => {
+        if (!cancelled) setHolidays(data)
+      })
+      .catch(() => undefined)
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [anchor])
 
   return (
     <div className="flex flex-col gap-3.5">
@@ -111,21 +131,33 @@ export function WeeklySchedule() {
             ))}
           </select>
         </div>
-        {days.map((day) => (
-          <div
-            key={day.toISOString()}
-            className={`flex flex-col items-center gap-0.5 border-b border-r border-border p-1.5 text-center text-[11px] font-semibold ${
-              isSameDay(day, today) ? "bg-indigo-soft text-indigo" : "bg-surface-alt text-text-soft"
-            }`}
-          >
-            <span>
-              {WEEKDAY_LABELS[(day.getDay() + 6) % 7]} {formatMd(day)}
-            </span>
-            {isSameDay(day, today) && (
-              <span className="rounded bg-indigo px-1.5 py-0.5 text-[9px] font-bold text-white">本日</span>
-            )}
-          </div>
-        ))}
+        {days.map((day) => {
+          const holiday = holidayOnDay(day)
+          return (
+            <div
+              key={day.toISOString()}
+              className={`flex flex-col items-center gap-0.5 border-b border-r border-border p-1.5 text-center text-[11px] font-semibold ${
+                holiday
+                  ? "bg-coral-soft text-coral"
+                  : isSameDay(day, today)
+                    ? "bg-indigo-soft text-indigo"
+                    : "bg-surface-alt text-text-soft"
+              }`}
+            >
+              <span>
+                {WEEKDAY_LABELS[(day.getDay() + 6) % 7]} {formatMd(day)}
+              </span>
+              {holiday && (
+                <span className="rounded bg-coral px-1.5 py-0.5 text-[9px] font-bold text-white">
+                  {holiday.name}
+                </span>
+              )}
+              {!holiday && isSameDay(day, today) && (
+                <span className="rounded bg-indigo px-1.5 py-0.5 text-[9px] font-bold text-white">本日</span>
+              )}
+            </div>
+          )
+        })}
 
         {rows.map((row) => (
           <Fragment key={row.userId}>
@@ -146,11 +178,12 @@ export function WeeklySchedule() {
             </div>
             {days.map((day) => {
               const dayOccurrences = occurrencesOnDay(row.occurrences, day)
+              const holiday = holidayOnDay(day)
               return (
                 <div
                   key={`${row.userId}-${day.toISOString()}`}
                   className={`flex min-h-[54px] flex-col justify-center gap-1 border-b border-r border-border p-1.5 ${
-                    isSameDay(day, today) ? "bg-indigo-soft" : "bg-white"
+                    holiday ? "bg-coral-soft" : isSameDay(day, today) ? "bg-indigo-soft" : "bg-white"
                   }`}
                 >
                   {dayOccurrences.map((occurrence) =>

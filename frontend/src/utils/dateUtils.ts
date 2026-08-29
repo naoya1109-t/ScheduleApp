@@ -18,3 +18,9 @@ export function isSameDay(a: Date, b: Date): boolean {
 export function formatMd(date: Date): string {
   return `${date.getMonth() + 1}/${date.getDate()}`
 }
+
+/** ローカル日付をYYYY-MM-DD形式にする(toISOString()は時差でずれるため使わない) */
+export function toDateOnly(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
