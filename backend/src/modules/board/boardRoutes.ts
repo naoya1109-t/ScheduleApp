@@ -1,11 +1,18 @@
+import { mkdirSync } from "node:fs"
+import { join } from "node:path"
 import { Router } from "express"
+import multer from "multer"
 import { asyncHandler } from "../../middleware/asyncHandler.js"
+import { HttpError } from "../../middleware/httpError.js"
 import { requireAdmin } from "../../middleware/requireAdmin.js"
 import { requireAuth } from "../../middleware/requireAuth.js"
 import type { PostService } from "./postService.js"
 
-export function createBoardRoutes(postService: PostService): Router {
+export function createBoardRoutes(postService: PostService, storageDir: string): Router {
   const router = Router()
+  const tempDir = join(storageDir, ".tmp")
+  mkdirSync(tempDir, { recursive: true })
+  const upload = multer({ dest: tempDir, limits: { fileSize: 100 * 1024 * 1024 } })
 
   router.use(requireAuth)
 
@@ -77,6 +84,19 @@ export function createBoardRoutes(postService: PostService): Router {
   )
 
   router.get(
+    "/attachments/:attachmentId/download",
+    asyncHandler(async (req, res) => {
+      const attachmentId = Number(req.params.attachmentId)
+      const attachment = await postService.getAttachment(attachmentId)
+      if (!attachment) {
+        res.status(404).json({ message: "添付ファイルが見つかりません" })
+        return
+      }
+      res.download(attachment.filePath, attachment.fileName)
+    }),
+  )
+
+  router.get(
     "/:postId",
     asyncHandler(async (req, res) => {
       const postId = Number(req.params.postId)
@@ -141,6 +161,41 @@ export function createBoardRoutes(postService: PostService): Router {
     asyncHandler(async (req, res) => {
       const postId = Number(req.params.postId)
       await postService.markRead(postId, req.session.userId!)
+      res.status(204).end()
+    }),
+  )
+
+  router.get(
+    "/:postId/attachments",
+    asyncHandler(async (req, res) => {
+      const postId = Number(req.params.postId)
+      res.json(await postService.listAttachments(postId))
+    }),
+  )
+
+  router.post(
+    "/:postId/attachments",
+    upload.single("file"),
+    asyncHandler(async (req, res) => {
+      if (!req.file) {
+        throw new HttpError(400, "file は必須です")
+      }
+      const postId = Number(req.params.postId)
+      const attachment = await postService.addAttachment(
+        postId,
+        req.file.originalname,
+        req.file.path,
+        req.session.userId!,
+      )
+      res.status(201).json(attachment)
+    }),
+  )
+
+  router.delete(
+    "/attachments/:attachmentId",
+    asyncHandler(async (req, res) => {
+      const attachmentId = Number(req.params.attachmentId)
+      await postService.deleteAttachment(attachmentId, req.session.userId!)
       res.status(204).end()
     }),
   )

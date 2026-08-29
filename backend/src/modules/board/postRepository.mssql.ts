@@ -1,5 +1,6 @@
 import type { ConnectionPool } from "mssql"
 import type {
+  Attachment,
   Comment,
   CreatePostInput,
   Post,
@@ -134,8 +135,14 @@ export class MssqlPostRepository implements PostRepository {
     return updated
   }
 
-  async delete(postId: number): Promise<void> {
+  async delete(postId: number): Promise<string[]> {
     const pool = await this.getPool()
+    const attachmentsResult = await pool
+      .request()
+      .input("postId", postId)
+      .query<{ file_path: string }>("SELECT file_path FROM post_attachment WHERE post_id = @postId")
+    const paths = attachmentsResult.recordset.map((row) => row.file_path)
+
     const transaction = pool.transaction()
     await transaction.begin()
     try {
@@ -154,6 +161,59 @@ export class MssqlPostRepository implements PostRepository {
       await transaction.rollback()
       throw error
     }
+    return paths
+  }
+
+  async listAttachments(postId: number): Promise<Attachment[]> {
+    const pool = await this.getPool()
+    const result = await pool
+      .request()
+      .input("postId", postId)
+      .query<{ attachment_id: number; post_id: number; file_name: string; file_path: string }>(
+        "SELECT attachment_id, post_id, file_name, file_path FROM post_attachment WHERE post_id = @postId",
+      )
+    return result.recordset.map((row) => ({
+      attachmentId: row.attachment_id,
+      postId: row.post_id,
+      fileName: row.file_name,
+      filePath: row.file_path,
+    }))
+  }
+
+  async addAttachment(postId: number, fileName: string, filePath: string): Promise<Attachment> {
+    const pool = await this.getPool()
+    const result = await pool
+      .request()
+      .input("postId", postId)
+      .input("fileName", fileName)
+      .input("filePath", filePath).query<{ attachment_id: number }>(`
+        INSERT INTO post_attachment (post_id, file_name, file_path)
+        OUTPUT inserted.attachment_id
+        VALUES (@postId, @fileName, @filePath)
+      `)
+    return { attachmentId: result.recordset[0].attachment_id, postId, fileName, filePath }
+  }
+
+  async findAttachmentById(attachmentId: number): Promise<Attachment | undefined> {
+    const pool = await this.getPool()
+    const result = await pool
+      .request()
+      .input("attachmentId", attachmentId)
+      .query<{ attachment_id: number; post_id: number; file_name: string; file_path: string }>(
+        "SELECT attachment_id, post_id, file_name, file_path FROM post_attachment WHERE attachment_id = @attachmentId",
+      )
+    const row = result.recordset[0]
+    return row
+      ? { attachmentId: row.attachment_id, postId: row.post_id, fileName: row.file_name, filePath: row.file_path }
+      : undefined
+  }
+
+  async deleteAttachment(attachmentId: number): Promise<void> {
+    const pool = await this.getPool()
+    await pool
+      .request()
+      .input("attachmentId", attachmentId)
+      .query("DELETE FROM post_attachment WHERE attachment_id = @attachmentId")
   }
 
   async listIdsByUpdatedAtRange(from: string, to: string): Promise<number[]> {

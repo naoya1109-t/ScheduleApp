@@ -6,7 +6,7 @@ import { FakePostRepository } from "./fakePostRepository.js"
 function setup() {
   const repository = new FakePostRepository()
   const log = new FakeOperationLogRepository()
-  const service = new PostService(repository, log)
+  const service = new PostService(repository, log, "./tmp-test-storage")
   repository.setAuthorName(1, "山田太郎")
   return { repository, log, service }
 }

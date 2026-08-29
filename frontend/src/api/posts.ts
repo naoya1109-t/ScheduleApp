@@ -1,4 +1,4 @@
-import { apiFetch } from "./client"
+import { apiFetch, apiUpload } from "./client"
 
 export type PostVisibilityScope = "company" | "group"
 
@@ -86,4 +86,28 @@ export function executeBulkDeletePosts(from: string, to: string): Promise<{ coun
     method: "POST",
     body: JSON.stringify({ from, to }),
   })
+}
+
+export interface Attachment {
+  attachmentId: number
+  postId: number
+  fileName: string
+}
+
+export function listAttachments(postId: number): Promise<Attachment[]> {
+  return apiFetch<Attachment[]>(`/api/posts/${postId}/attachments`)
+}
+
+export function uploadAttachment(postId: number, file: File): Promise<Attachment> {
+  const formData = new FormData()
+  formData.append("file", file)
+  return apiUpload<Attachment>(`/api/posts/${postId}/attachments`, formData)
+}
+
+export function deleteAttachment(attachmentId: number): Promise<void> {
+  return apiFetch<void>(`/api/posts/attachments/${attachmentId}`, { method: "DELETE" })
+}
+
+export function attachmentDownloadUrl(attachmentId: number): string {
+  return `/api/posts/attachments/${attachmentId}/download`
 }

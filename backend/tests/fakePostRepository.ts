@@ -1,4 +1,5 @@
 import type {
+  Attachment,
   Comment,
   CreatePostInput,
   Post,
@@ -10,11 +11,13 @@ import type {
 export class FakePostRepository implements PostRepository {
   posts: Post[] = []
   comments: Comment[] = []
+  attachments: Attachment[] = []
   reads = new Set<string>()
   authorNames = new Map<number, string>()
   userGroups = new Map<number, number[]>()
   private nextPostId = 1
   private nextCommentId = 1
+  private nextAttachmentId = 1
 
   setAuthorName(userId: number, name: string): void {
     this.authorNames.set(userId, name)
@@ -75,9 +78,14 @@ export class FakePostRepository implements PostRepository {
     return post
   }
 
-  async delete(postId: number): Promise<void> {
+  async delete(postId: number): Promise<string[]> {
+    const paths = this.attachments
+      .filter((attachment) => attachment.postId === postId)
+      .map((attachment) => attachment.filePath)
     this.posts = this.posts.filter((post) => post.postId !== postId)
     this.comments = this.comments.filter((comment) => comment.postId !== postId)
+    this.attachments = this.attachments.filter((attachment) => attachment.postId !== postId)
+    return paths
   }
 
   async listComments(postId: number): Promise<Comment[]> {
@@ -109,5 +117,23 @@ export class FakePostRepository implements PostRepository {
     return this.posts
       .filter((post) => post.updatedAt >= from && post.updatedAt <= to)
       .map((post) => post.postId)
+  }
+
+  async listAttachments(postId: number): Promise<Attachment[]> {
+    return this.attachments.filter((attachment) => attachment.postId === postId)
+  }
+
+  async addAttachment(postId: number, fileName: string, filePath: string): Promise<Attachment> {
+    const attachment: Attachment = { attachmentId: this.nextAttachmentId++, postId, fileName, filePath }
+    this.attachments.push(attachment)
+    return attachment
+  }
+
+  async findAttachmentById(attachmentId: number): Promise<Attachment | undefined> {
+    return this.attachments.find((attachment) => attachment.attachmentId === attachmentId)
+  }
+
+  async deleteAttachment(attachmentId: number): Promise<void> {
+    this.attachments = this.attachments.filter((attachment) => attachment.attachmentId !== attachmentId)
   }
 }

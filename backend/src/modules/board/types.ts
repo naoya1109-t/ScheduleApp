@@ -35,6 +35,13 @@ export interface Comment {
   createdAt: string
 }
 
+export interface Attachment {
+  attachmentId: number
+  postId: number
+  fileName: string
+  filePath: string
+}
+
 export interface CreatePostInput {
   authorId: number
   title: string
@@ -56,11 +63,16 @@ export interface PostRepository {
   findBySlug(slug: string): Promise<Post | undefined>
   create(input: CreatePostInput & { permalinkSlug: string }): Promise<Post>
   update(postId: number, input: UpdatePostInput): Promise<Post>
-  delete(postId: number): Promise<void>
+  /** 削除対象投稿の全添付ファイルの物理パスを返す(ディスク削除用) */
+  delete(postId: number): Promise<string[]>
   listComments(postId: number): Promise<Comment[]>
   addComment(postId: number, authorId: number, body: string): Promise<Comment>
   markRead(postId: number, userId: number): Promise<void>
   isRead(postId: number, userId: number): Promise<boolean>
   /** 最終更新日でFrom-To指定した対象の投稿IDを返す(一括削除のプレビュー・実行で共用) */
   listIdsByUpdatedAtRange(from: string, to: string): Promise<number[]>
+  listAttachments(postId: number): Promise<Attachment[]>
+  addAttachment(postId: number, fileName: string, filePath: string): Promise<Attachment>
+  findAttachmentById(attachmentId: number): Promise<Attachment | undefined>
+  deleteAttachment(attachmentId: number): Promise<void>
 }

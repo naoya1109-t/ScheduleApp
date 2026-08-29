@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react"
 import { useNavigate } from "react-router-dom"
 import { ApiError } from "../../api/client"
-import { createPost, type PostVisibilityScope } from "../../api/posts"
+import { createPost, uploadAttachment, type PostVisibilityScope } from "../../api/posts"
 import { RichTextEditor } from "../../components/RichTextEditor"
 
 export function NewPostPage() {
@@ -10,8 +10,18 @@ export function NewPostPage() {
   const [bodyHtml, setBodyHtml] = useState("")
   const [visibilityScope, setVisibilityScope] = useState<PostVisibilityScope>("company")
   const [groupId, setGroupId] = useState("")
+  const [attachmentFiles, setAttachmentFiles] = useState<File[]>([])
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  function handleFileSelect(fileList: FileList | null) {
+    if (!fileList) return
+    setAttachmentFiles((prev) => [...prev, ...Array.from(fileList)])
+  }
+
+  function removeAttachment(index: number) {
+    setAttachmentFiles((prev) => prev.filter((_, i) => i !== index))
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -24,6 +34,9 @@ export function NewPostPage() {
         visibilityScope,
         groupId: visibilityScope === "group" && groupId ? Number(groupId) : null,
       })
+      for (const file of attachmentFiles) {
+        await uploadAttachment(created.postId, file)
+      }
       navigate(`/board/${created.postId}`)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "投稿に失敗しました")
@@ -77,6 +90,38 @@ export function NewPostPage() {
                 required
               />
             </div>
+          )}
+        </div>
+
+        <div>
+          <label className="mb-1 block text-[11.5px] font-bold text-text-soft">添付ファイル(任意)</label>
+          <input
+            type="file"
+            multiple
+            className="text-sm"
+            onChange={(e) => {
+              handleFileSelect(e.target.files)
+              e.target.value = ""
+            }}
+          />
+          {attachmentFiles.length > 0 && (
+            <ul className="mt-2 flex flex-col gap-1">
+              {attachmentFiles.map((file, index) => (
+                <li
+                  key={`${file.name}-${index}`}
+                  className="flex items-center justify-between rounded-md border border-border bg-surface-alt px-3 py-1.5 text-[12.5px]"
+                >
+                  <span>{file.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeAttachment(index)}
+                    className="text-coral"
+                  >
+                    削除
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
 
