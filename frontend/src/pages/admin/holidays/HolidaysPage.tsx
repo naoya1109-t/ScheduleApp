@@ -68,7 +68,7 @@ export function HolidaysPage() {
 
   return (
     <div className="mx-auto max-w-[700px] p-8">
-      <h1 className="mb-6 text-[18px] font-bold">祝日設定</h1>
+      <h1 className="mb-6 text-[18px] font-bold">祝日・休日設定</h1>
 
       <div className="mb-6 flex items-center gap-3">
         <label className="text-[11.5px] font-bold text-text-soft">年度</label>
