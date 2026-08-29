@@ -2,6 +2,7 @@ import { Link } from "react-router-dom"
 
 const ADMIN_MENU_ITEMS = [
   { to: "/admin/users", label: "利用者管理", description: "アカウントの作成・退職処理を行います" },
+  { to: "/admin/groups", label: "グループ管理", description: "グループの追加・編集・削除、メンバー管理を行います" },
   { to: "/admin/holidays", label: "祝日設定", description: "会社独自の休日カレンダーを設定します" },
   { to: "/admin/top-settings", label: "表示件数設定", description: "トップ画面の各種一覧の表示件数を設定します" },
   { to: "/admin/group-order", label: "表示順設定", description: "グループ内メンバーの表示順を設定します" },

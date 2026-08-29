@@ -29,8 +29,8 @@ describe("グループメンバー表示順設定", () => {
   it("管理画面での並び替えが一覧に反映される", async () => {
     const groupRepository = new FakeGroupRepository()
     groupRepository.addGroup({ groupId: 1, name: "営業部" })
-    groupRepository.addMember(1, 10, "スタッフA")
-    groupRepository.addMember(1, 11, "スタッフB")
+    groupRepository.seedMember(1, 10, "スタッフA")
+    groupRepository.seedMember(1, 11, "スタッフB")
 
     await groupRepository.setMemberOrder(1, [
       { userId: 11, displayOrder: 1 },

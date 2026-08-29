@@ -27,6 +27,9 @@ import { GroupOrderPage } from "./pages/admin/groupOrder/GroupOrderPage"
 import { BulkDeletePage } from "./pages/admin/bulkDelete/BulkDeletePage"
 import { RoomsAdminPage } from "./pages/admin/rooms/RoomsAdminPage"
 import { NewRoomPage } from "./pages/admin/rooms/NewRoomPage"
+import { GroupsAdminPage } from "./pages/admin/groups/GroupsAdminPage"
+import { NewGroupPage } from "./pages/admin/groups/NewGroupPage"
+import { GroupMembersPage } from "./pages/admin/groups/GroupMembersPage"
 
 function App() {
   return (
@@ -269,6 +272,36 @@ function App() {
             <RequireAuth adminOnly>
               <Layout>
                 <NewRoomPage />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/groups"
+          element={
+            <RequireAuth adminOnly>
+              <Layout>
+                <GroupsAdminPage />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/groups/new"
+          element={
+            <RequireAuth adminOnly>
+              <Layout>
+                <NewGroupPage />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/groups/:groupId/members"
+          element={
+            <RequireAuth adminOnly>
+              <Layout>
+                <GroupMembersPage />
               </Layout>
             </RequireAuth>
           }

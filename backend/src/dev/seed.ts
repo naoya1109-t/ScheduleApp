@@ -86,10 +86,10 @@ export async function seedDevData() {
 
   groupRepository.addGroup({ groupId: 1, name: "営業部" })
   groupRepository.addGroup({ groupId: 2, name: "総務部" })
-  groupRepository.addMember(1, admin.userId, admin.name, 1)
-  groupRepository.addMember(1, staffA.userId, staffA.name, 2)
-  groupRepository.addMember(1, staffB.userId, staffB.name, 3)
-  groupRepository.addMember(2, staffC.userId, staffC.name, 1)
+  groupRepository.seedMember(1, admin.userId, admin.name, 1)
+  groupRepository.seedMember(1, staffA.userId, staffA.name, 2)
+  groupRepository.seedMember(1, staffB.userId, staffB.name, 3)
+  groupRepository.seedMember(2, staffC.userId, staffC.name, 1)
   // FakePostRepositoryは掲示板の可視性判定用に、所属グループを独自に保持する
   // (groupRepositoryとは別状態のため、こちらにも同じ所属関係を反映する)
   postRepository.setUserGroups(admin.userId, [1])

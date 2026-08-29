@@ -68,10 +68,10 @@ describe("TopPageService", () => {
       status: "active",
     })
     groupRepository.addGroup({ groupId: 1, name: "営業部" })
-    groupRepository.addMember(1, self.userId, self.name)
+    groupRepository.seedMember(1, self.userId, self.name)
     // 表示順は管理画面で手動設定される想定(要件3-8)。Aを先、Bを後にする
-    groupRepository.addMember(1, memberA.userId, memberA.name, 1)
-    groupRepository.addMember(1, memberB.userId, memberB.name, 2)
+    groupRepository.seedMember(1, memberA.userId, memberA.name, 1)
+    groupRepository.seedMember(1, memberB.userId, memberB.name, 2)
 
     const rows = await service.getWeekGantt(self.userId, 1, RANGE_FROM, RANGE_TO)
 
@@ -92,7 +92,7 @@ describe("TopPageService", () => {
       status: "active",
     })
     groupRepository.addGroup({ groupId: 1, name: "営業部" })
-    groupRepository.addMember(1, self.userId, self.name, 1)
+    groupRepository.seedMember(1, self.userId, self.name, 1)
 
     const rows = await service.getWeekGantt(self.userId, 1, RANGE_FROM, RANGE_TO)
     expect(rows).toHaveLength(1)
@@ -119,8 +119,8 @@ describe("TopPageService", () => {
       status: "active",
     })
     groupRepository.addGroup({ groupId: 1, name: "営業部" })
-    groupRepository.addMember(1, self.userId, self.name)
-    groupRepository.addMember(1, member.userId, member.name, 1)
+    groupRepository.seedMember(1, self.userId, self.name)
+    groupRepository.seedMember(1, member.userId, member.name, 1)
     await calendarService.createEvent({
       ownerId: member.userId,
       title: "通院",

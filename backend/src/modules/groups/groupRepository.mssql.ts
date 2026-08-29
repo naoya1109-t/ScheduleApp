@@ -1,5 +1,6 @@
 import type { ConnectionPool } from "mssql"
-import type { Group, GroupMember, GroupRepository, MemberOrderEntry } from "./types.js"
+import { HttpError } from "../../middleware/httpError.js"
+import type { CreateGroupInput, Group, GroupMember, GroupRepository, MemberOrderEntry } from "./types.js"
 
 export class MssqlGroupRepository implements GroupRepository {
   constructor(private readonly getPool: () => Promise<ConnectionPool>) {}
@@ -24,6 +25,61 @@ export class MssqlGroupRepository implements GroupRepository {
     return result.recordset.map((row) => ({ groupId: row.group_id, name: row.name }))
   }
 
+  async findById(groupId: number): Promise<Group | undefined> {
+    const pool = await this.getPool()
+    const result = await pool
+      .request()
+      .input("groupId", groupId)
+      .query<{ group_id: number; name: string }>("SELECT group_id, name FROM app_group WHERE group_id = @groupId")
+    const row = result.recordset[0]
+    return row ? { groupId: row.group_id, name: row.name } : undefined
+  }
+
+  async create(input: CreateGroupInput): Promise<Group> {
+    const pool = await this.getPool()
+    const result = await pool.request().input("name", input.name).query<{ group_id: number }>(`
+      INSERT INTO app_group (name)
+      OUTPUT inserted.group_id
+      VALUES (@name)
+    `)
+    return { groupId: result.recordset[0].group_id, name: input.name }
+  }
+
+  async update(groupId: number, input: CreateGroupInput): Promise<Group> {
+    const pool = await this.getPool()
+    await pool
+      .request()
+      .input("groupId", groupId)
+      .input("name", input.name)
+      .query("UPDATE app_group SET name = @name WHERE group_id = @groupId")
+    const updated = await this.findById(groupId)
+    if (!updated) {
+      throw new Error("グループの更新に失敗しました")
+    }
+    return updated
+  }
+
+  async delete(groupId: number): Promise<void> {
+    const pool = await this.getPool()
+    const transaction = pool.transaction()
+    await transaction.begin()
+    try {
+      await transaction
+        .request()
+        .input("groupId", groupId)
+        .query("DELETE FROM group_member_order WHERE group_id = @groupId")
+      await transaction.request().input("groupId", groupId).query("DELETE FROM user_group WHERE group_id = @groupId")
+      await transaction.request().input("groupId", groupId).query("DELETE FROM app_group WHERE group_id = @groupId")
+      await transaction.commit()
+    } catch (error) {
+      await transaction.rollback()
+      if ((error as { number?: number }).number === 547) {
+        throw new HttpError(409, "このグループを参照している投稿があるため削除できません")
+      }
+      throw error
+    }
+  }
+
   async listMembersOrdered(groupId: number): Promise<GroupMember[]> {
     const pool = await this.getPool()
     const result = await pool.request().input("groupId", groupId).query<{
@@ -43,6 +99,40 @@ export class MssqlGroupRepository implements GroupRepository {
       name: row.name,
       displayOrder: row.display_order,
     }))
+  }
+
+  async addMember(groupId: number, userId: number): Promise<void> {
+    const pool = await this.getPool()
+    await pool
+      .request()
+      .input("groupId", groupId)
+      .input("userId", userId)
+      .query(`
+        IF NOT EXISTS (SELECT 1 FROM user_group WHERE group_id = @groupId AND user_id = @userId)
+        INSERT INTO user_group (user_id, group_id) VALUES (@userId, @groupId)
+      `)
+  }
+
+  async removeMember(groupId: number, userId: number): Promise<void> {
+    const pool = await this.getPool()
+    const transaction = pool.transaction()
+    await transaction.begin()
+    try {
+      await transaction
+        .request()
+        .input("groupId", groupId)
+        .input("userId", userId)
+        .query("DELETE FROM group_member_order WHERE group_id = @groupId AND user_id = @userId")
+      await transaction
+        .request()
+        .input("groupId", groupId)
+        .input("userId", userId)
+        .query("DELETE FROM user_group WHERE group_id = @groupId AND user_id = @userId")
+      await transaction.commit()
+    } catch (error) {
+      await transaction.rollback()
+      throw error
+    }
   }
 
   async setMemberOrder(groupId: number, orders: MemberOrderEntry[]): Promise<void> {
