@@ -15,6 +15,7 @@ import { MssqlEventRepository } from "./modules/calendar/calendarRepository.mssq
 import { createHolidayRoutes } from "./modules/holidays/holidayRoutes.js"
 import { HolidayService } from "./modules/holidays/holidayService.js"
 import { MssqlHolidayRepository } from "./modules/holidays/holidayRepository.mssql.js"
+import { HttpJapaneseHolidaySource } from "./modules/holidays/japaneseHolidaySource.js"
 import { createGroupRoutes } from "./modules/groups/groupRoutes.js"
 import { MssqlGroupRepository } from "./modules/groups/groupRepository.mssql.js"
 import { MssqlOperationLogRepository } from "./modules/logs/operationLogRepository.mssql.js"
@@ -80,7 +81,7 @@ const postService = new PostService(postRepository, operationLogRepository, env.
 const eventRepository = new MssqlEventRepository(getPool)
 const calendarService = new CalendarService(eventRepository)
 const holidayRepository = new MssqlHolidayRepository(getPool)
-const holidayService = new HolidayService(holidayRepository)
+const holidayService = new HolidayService(holidayRepository, new HttpJapaneseHolidaySource())
 const groupRepository = new MssqlGroupRepository(getPool)
 const topPageSettingsRepository = new MssqlTopPageSettingsRepository(getPool)
 const topPageService = new TopPageService(calendarService, groupRepository, userRepository, topPageSettingsRepository)

@@ -1,6 +1,12 @@
 import { useEffect, useState, type FormEvent } from "react"
 import { ApiError } from "../../../api/client"
-import { createHoliday, deleteHoliday, listHolidaysByYear, type Holiday } from "../../../api/holidays"
+import {
+  createHoliday,
+  deleteHoliday,
+  importJapaneseHolidays,
+  listHolidaysByYear,
+  type Holiday,
+} from "../../../api/holidays"
 
 const currentYear = new Date().getFullYear()
 
@@ -10,6 +16,7 @@ export function HolidaysPage() {
   const [holidayDate, setHolidayDate] = useState("")
   const [name, setName] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [importing, setImporting] = useState(false)
 
   async function reload(targetYear: number) {
     setHolidays(await listHolidaysByYear(targetYear))
@@ -43,6 +50,22 @@ export function HolidaysPage() {
     await reload(year)
   }
 
+  async function handleImport() {
+    if (!window.confirm(`${year}年の日本の祝日を外部サイトから取得していいですか？`)) {
+      return
+    }
+    setError(null)
+    setImporting(true)
+    try {
+      const imported = await importJapaneseHolidays(year)
+      setHolidays(imported)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "祝日の取得に失敗しました")
+    } finally {
+      setImporting(false)
+    }
+  }
+
   return (
     <div className="mx-auto max-w-[700px] p-8">
       <h1 className="mb-6 text-[18px] font-bold">祝日設定</h1>
@@ -60,6 +83,13 @@ export function HolidaysPage() {
             </option>
           ))}
         </select>
+        <button
+          onClick={handleImport}
+          disabled={importing}
+          className="rounded-md border border-border px-3 py-2 text-[12px] font-bold text-text-soft disabled:opacity-60"
+        >
+          {importing ? "取得中..." : "祝日取得"}
+        </button>
       </div>
 
       <form

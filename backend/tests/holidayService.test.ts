@@ -2,11 +2,13 @@ import { describe, expect, it } from "vitest"
 import { HolidayService } from "../src/modules/holidays/holidayService.js"
 import { HttpError } from "../src/middleware/httpError.js"
 import { FakeHolidayRepository } from "./fakeHolidayRepository.js"
+import { FakeJapaneseHolidaySource } from "./fakeJapaneseHolidaySource.js"
 
 function setup() {
   const repository = new FakeHolidayRepository()
-  const service = new HolidayService(repository)
-  return { repository, service }
+  const holidaySource = new FakeJapaneseHolidaySource()
+  const service = new HolidayService(repository, holidaySource)
+  return { repository, holidaySource, service }
 }
 
 describe("HolidayService", () => {
@@ -45,5 +47,31 @@ describe("HolidayService", () => {
 
     await service.deleteHoliday(created.holidayId)
     expect(repository.holidays).toHaveLength(0)
+  })
+
+  it("日本の祝日を外部から取り込める", async () => {
+    const { service, holidaySource } = setup()
+    holidaySource.setYear(2026, [
+      { date: "2026-01-01", name: "元日" },
+      { date: "2026-01-12", name: "成人の日" },
+    ])
+
+    const imported = await service.importJapaneseHolidays(2026)
+
+    expect(imported.map((h) => h.name)).toEqual(["元日", "成人の日"])
+  })
+
+  it("既に登録済みの日付は取り込み時に重複登録しない", async () => {
+    const { service, holidaySource } = setup()
+    await service.createHoliday({ holidayDate: "2026-01-01", name: "元日(手動登録)", fiscalYear: 2026 })
+    holidaySource.setYear(2026, [
+      { date: "2026-01-01", name: "元日" },
+      { date: "2026-01-12", name: "成人の日" },
+    ])
+
+    const imported = await service.importJapaneseHolidays(2026)
+
+    expect(imported).toHaveLength(2)
+    expect(imported.find((h) => h.holidayDate === "2026-01-01")?.name).toBe("元日(手動登録)")
   })
 })

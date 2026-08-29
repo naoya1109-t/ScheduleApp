@@ -37,6 +37,20 @@ export function createHolidayRoutes(holidayService: HolidayService): Router {
     }),
   )
 
+  router.post(
+    "/import-jp",
+    requireAdmin,
+    asyncHandler(async (req, res) => {
+      const fiscalYear = Number(req.query.year)
+      if (!fiscalYear) {
+        res.status(400).json({ message: "year は必須です" })
+        return
+      }
+      const holidays = await holidayService.importJapaneseHolidays(fiscalYear)
+      res.json(holidays)
+    }),
+  )
+
   router.put(
     "/:holidayId",
     requireAdmin,

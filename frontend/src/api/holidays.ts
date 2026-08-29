@@ -26,3 +26,7 @@ export function createHoliday(input: { holidayDate: string; name: string; fiscal
 export function deleteHoliday(holidayId: number): Promise<void> {
   return apiFetch<void>(`/api/holidays/${holidayId}`, { method: "DELETE" })
 }
+
+export function importJapaneseHolidays(fiscalYear: number): Promise<Holiday[]> {
+  return apiFetch<Holiday[]>(`/api/holidays/import-jp?year=${fiscalYear}`, { method: "POST" })
+}

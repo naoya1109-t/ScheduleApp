@@ -14,6 +14,7 @@ import { FileService } from "../modules/files/fileService.js"
 import { createGroupRoutes } from "../modules/groups/groupRoutes.js"
 import { createHolidayRoutes } from "../modules/holidays/holidayRoutes.js"
 import { HolidayService } from "../modules/holidays/holidayService.js"
+import { HttpJapaneseHolidaySource } from "../modules/holidays/japaneseHolidaySource.js"
 import { createIncidentReportRoutes } from "../modules/incidentReports/incidentReportRoutes.js"
 import { IncidentReportService } from "../modules/incidentReports/incidentReportService.js"
 import { createMeetingFinderRoutes } from "../modules/meetingFinder/meetingFinderRoutes.js"
@@ -65,7 +66,7 @@ async function main() {
   const userService = new UserService(userRepository)
   const calendarService = new CalendarService(eventRepository)
   const postService = new PostService(postRepository, operationLogRepository, "./storage")
-  const holidayService = new HolidayService(holidayRepository)
+  const holidayService = new HolidayService(holidayRepository, new HttpJapaneseHolidaySource())
   const topPageService = new TopPageService(calendarService, groupRepository, userRepository, topPageSettingsRepository)
   const roomService = new RoomService(roomRepository, reservationRepository, eventRepository)
   const fileService = new FileService(fileRepository, folderRepository, operationLogRepository, "./storage")

@@ -23,3 +23,12 @@ export interface HolidayRepository {
   update(holidayId: number, input: UpdateHolidayInput): Promise<Holiday>
   delete(holidayId: number): Promise<void>
 }
+
+export interface JapaneseHolidayEntry {
+  date: string
+  name: string
+}
+
+export interface JapaneseHolidaySource {
+  fetchYear(fiscalYear: number): Promise<JapaneseHolidayEntry[]>
+}

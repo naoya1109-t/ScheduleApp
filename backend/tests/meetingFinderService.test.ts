@@ -4,6 +4,7 @@ import { HolidayService } from "../src/modules/holidays/holidayService.js"
 import { MeetingFinderService } from "../src/modules/meetingFinder/meetingFinderService.js"
 import { FakeEventRepository } from "./fakeEventRepository.js"
 import { FakeHolidayRepository } from "./fakeHolidayRepository.js"
+import { FakeJapaneseHolidaySource } from "./fakeJapaneseHolidaySource.js"
 
 // 2026-08-31(月)を起点に検索する(ローカルタイムゾーン基準)。8/29-30・9/5-6は土日。
 const SEARCH_FROM = new Date(2026, 7, 31).toISOString()
@@ -17,7 +18,7 @@ function setup() {
   const eventRepository = new FakeEventRepository()
   const calendarService = new CalendarService(eventRepository)
   const holidayRepository = new FakeHolidayRepository()
-  const holidayService = new HolidayService(holidayRepository)
+  const holidayService = new HolidayService(holidayRepository, new FakeJapaneseHolidaySource())
   const service = new MeetingFinderService(calendarService, holidayService)
   return { eventRepository, calendarService, holidayService, holidayRepository, service }
 }
