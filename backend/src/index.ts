@@ -26,6 +26,8 @@ import { createIncidentReportRoutes } from "./modules/incidentReports/incidentRe
 import { IncidentReportService } from "./modules/incidentReports/incidentReportService.js"
 import { MssqlIncidentReportRepository } from "./modules/incidentReports/incidentReportRepository.mssql.js"
 import { MssqlCustomerMasterRepository } from "./modules/incidentReports/customerMasterRepository.mssql.js"
+import { createMeetingFinderRoutes } from "./modules/meetingFinder/meetingFinderRoutes.js"
+import { MeetingFinderService } from "./modules/meetingFinder/meetingFinderService.js"
 import { createRoomRoutes } from "./modules/rooms/roomRoutes.js"
 import { RoomService } from "./modules/rooms/roomService.js"
 import { MssqlRoomRepository } from "./modules/rooms/roomRepository.mssql.js"
@@ -95,6 +97,7 @@ const incidentReportService = new IncidentReportService(
   customerMasterRepository,
   operationLogRepository,
 )
+const meetingFinderService = new MeetingFinderService(calendarService, holidayService)
 
 app.use("/api/auth", createAuthRoutes(authService, userRepository))
 app.use("/api/admin/users", createUserRoutes(userService))
@@ -107,6 +110,7 @@ app.use("/api/top-page", createTopPageRoutes(topPageService))
 app.use("/api/rooms", createRoomRoutes(roomService))
 app.use("/api/files", createFileRoutes(fileService, env.storageDir))
 app.use("/api/incident-reports", createIncidentReportRoutes(incidentReportService))
+app.use("/api/meeting-finder", createMeetingFinderRoutes(meetingFinderService))
 
 app.use(errorHandler)
 

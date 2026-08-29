@@ -6,6 +6,7 @@ const NAV_ITEMS = [
   { to: "/", label: "トップ" },
   { to: "/calendar", label: "スケジュール" },
   { to: "/rooms", label: "会議室予約" },
+  { to: "/meeting-finder", label: "会議候補日抽出" },
   { to: "/board", label: "掲示板" },
   { to: "/files", label: "ファイル" },
   { to: "/incident-reports", label: "事故報告" },

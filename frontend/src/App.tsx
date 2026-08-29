@@ -12,6 +12,7 @@ import { NewPostPage } from "./pages/board/NewPostPage"
 import { PostDetailPage } from "./pages/board/PostDetailPage"
 import { PostPermalinkRedirect } from "./pages/board/PostPermalinkRedirect"
 import { RoomsPage } from "./pages/rooms/RoomsPage"
+import { MeetingFinderPage } from "./pages/meetingFinder/MeetingFinderPage"
 import { FilesPage } from "./pages/files/FilesPage"
 import { FileDetailPage } from "./pages/files/FileDetailPage"
 import { FilePermalinkRedirect } from "./pages/files/FilePermalinkRedirect"
@@ -61,6 +62,16 @@ function App() {
             <RequireAuth>
               <Layout>
                 <RoomsPage />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/meeting-finder"
+          element={
+            <RequireAuth>
+              <Layout>
+                <MeetingFinderPage />
               </Layout>
             </RequireAuth>
           }

@@ -92,6 +92,22 @@ export class CalendarService {
     return result.sort((a, b) => a.startAt.localeCompare(b.startAt))
   }
 
+  /**
+   * 会議候補日時の自動抽出(空き時間判定)専用。公開対象・非表示チェックに関わらず
+   * 本人の全予定を対象とする(タイトル等の内容は一切返さず、busy区間のみ返す)。
+   * 非表示設定の予定も「内容は隠れていても時間は埋まっている」扱いとする(要件3-10)。
+   */
+  async listBusyIntervals(ownerId: number, from: string, to: string): Promise<Array<{ startAt: Date; endAt: Date }>> {
+    const events = await this.repository.listByOwnerAndRange(ownerId, from, to)
+    const rangeFrom = new Date(from)
+    const rangeTo = new Date(to)
+    const intervals: Array<{ startAt: Date; endAt: Date }> = []
+    for (const event of events) {
+      intervals.push(...expandOccurrences(event, rangeFrom, rangeTo))
+    }
+    return intervals
+  }
+
   async listCompanyHolidays(from: string, to: string): Promise<VisibleOccurrence[]> {
     const events = await this.repository.listCompanyHolidaysInRange(from, to)
     return events.map((event) => ({
