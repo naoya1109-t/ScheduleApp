@@ -15,6 +15,9 @@ const NAV_ITEMS = [
 const ADMIN_NAV_ITEMS = [
   { to: "/admin/users", label: "利用者管理" },
   { to: "/admin/holidays", label: "祝日設定" },
+  { to: "/admin/top-settings", label: "表示件数設定" },
+  { to: "/admin/group-order", label: "表示順設定" },
+  { to: "/admin/bulk-delete", label: "掲示板一括削除" },
 ]
 
 export function Layout({ children }: { children: ReactNode }) {

@@ -1,5 +1,6 @@
 import { Router } from "express"
 import { asyncHandler } from "../../middleware/asyncHandler.js"
+import { requireAdmin } from "../../middleware/requireAdmin.js"
 import { requireAuth } from "../../middleware/requireAuth.js"
 import type { TopPageService } from "./topPageService.js"
 
@@ -12,6 +13,19 @@ export function createTopPageRoutes(topPageService: TopPageService): Router {
     "/settings",
     asyncHandler(async (_req, res) => {
       res.json(await topPageService.getSettings())
+    }),
+  )
+
+  router.put(
+    "/settings",
+    requireAdmin,
+    asyncHandler(async (req, res) => {
+      const { boardDisplayCount, fileDisplayCount } = req.body
+      if (!Number.isInteger(boardDisplayCount) || !Number.isInteger(fileDisplayCount)) {
+        res.status(400).json({ message: "boardDisplayCount, fileDisplayCount は整数で指定してください" })
+        return
+      }
+      res.json(await topPageService.updateSettings({ boardDisplayCount, fileDisplayCount }))
     }),
   )
 

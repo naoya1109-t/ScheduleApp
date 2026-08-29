@@ -17,6 +17,13 @@ export function getTopPageSettings(): Promise<TopPageSettings> {
   return apiFetch<TopPageSettings>("/api/top-page/settings")
 }
 
+export function updateTopPageSettings(input: TopPageSettings): Promise<TopPageSettings> {
+  return apiFetch<TopPageSettings>("/api/top-page/settings", {
+    method: "PUT",
+    body: JSON.stringify(input),
+  })
+}
+
 export function getWeekGantt(groupId: number | null, from: string, to: string): Promise<WeekGanttRow[]> {
   const params = new URLSearchParams({ from, to })
   if (groupId !== null) {

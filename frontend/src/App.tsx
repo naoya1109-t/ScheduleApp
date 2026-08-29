@@ -20,6 +20,9 @@ import { TopPage } from "./pages/top/TopPage"
 import { IncidentReportListPage } from "./pages/incidentReports/IncidentReportListPage"
 import { NewIncidentReportPage } from "./pages/incidentReports/NewIncidentReportPage"
 import { IncidentReportDetailPage } from "./pages/incidentReports/IncidentReportDetailPage"
+import { TopSettingsPage } from "./pages/admin/topSettings/TopSettingsPage"
+import { GroupOrderPage } from "./pages/admin/groupOrder/GroupOrderPage"
+import { BulkDeletePage } from "./pages/admin/bulkDelete/BulkDeletePage"
 
 function App() {
   return (
@@ -192,6 +195,36 @@ function App() {
             <RequireAuth adminOnly>
               <Layout>
                 <HolidaysPage />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/top-settings"
+          element={
+            <RequireAuth adminOnly>
+              <Layout>
+                <TopSettingsPage />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/group-order"
+          element={
+            <RequireAuth adminOnly>
+              <Layout>
+                <GroupOrderPage />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/bulk-delete"
+          element={
+            <RequireAuth adminOnly>
+              <Layout>
+                <BulkDeletePage />
               </Layout>
             </RequireAuth>
           }

@@ -89,4 +89,24 @@ export class PostService {
   async markRead(postId: number, userId: number): Promise<void> {
     await this.repository.markRead(postId, userId)
   }
+
+  /** 一括削除の実行前プレビュー(要件3-6章: 対象件数を確認してから実行する) */
+  async previewBulkDelete(from: string, to: string): Promise<{ count: number }> {
+    const ids = await this.repository.listIdsByUpdatedAtRange(from, to)
+    return { count: ids.length }
+  }
+
+  async executeBulkDelete(from: string, to: string, actorId: number): Promise<{ count: number }> {
+    const ids = await this.repository.listIdsByUpdatedAtRange(from, to)
+    for (const postId of ids) {
+      await this.repository.delete(postId)
+    }
+    await this.operationLog.record({
+      actorId,
+      targetType: "post",
+      targetId: `bulk:${from}~${to}`,
+      action: "bulk_delete",
+    })
+    return { count: ids.length }
+  }
 }

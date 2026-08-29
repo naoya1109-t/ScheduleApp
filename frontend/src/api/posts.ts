@@ -75,3 +75,15 @@ export function addComment(postId: number, body: string): Promise<Comment> {
 export function markPostRead(postId: number): Promise<void> {
   return apiFetch<void>(`/api/posts/${postId}/read`, { method: "POST" })
 }
+
+export function previewBulkDeletePosts(from: string, to: string): Promise<{ count: number }> {
+  const params = new URLSearchParams({ from, to })
+  return apiFetch<{ count: number }>(`/api/posts/bulk-delete/preview?${params.toString()}`)
+}
+
+export function executeBulkDeletePosts(from: string, to: string): Promise<{ count: number }> {
+  return apiFetch<{ count: number }>("/api/posts/bulk-delete", {
+    method: "POST",
+    body: JSON.stringify({ from, to }),
+  })
+}

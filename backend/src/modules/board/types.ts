@@ -61,4 +61,6 @@ export interface PostRepository {
   addComment(postId: number, authorId: number, body: string): Promise<Comment>
   markRead(postId: number, userId: number): Promise<void>
   isRead(postId: number, userId: number): Promise<boolean>
+  /** 最終更新日でFrom-To指定した対象の投稿IDを返す(一括削除のプレビュー・実行で共用) */
+  listIdsByUpdatedAtRange(from: string, to: string): Promise<number[]>
 }

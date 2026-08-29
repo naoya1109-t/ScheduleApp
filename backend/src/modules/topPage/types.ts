@@ -5,8 +5,14 @@ export interface TopPageSettings {
   fileDisplayCount: number
 }
 
+export interface UpdateTopPageSettingsInput {
+  boardDisplayCount: number
+  fileDisplayCount: number
+}
+
 export interface TopPageSettingsRepository {
   get(): Promise<TopPageSettings>
+  update(input: UpdateTopPageSettingsInput): Promise<TopPageSettings>
 }
 
 export interface WeekGanttRow {

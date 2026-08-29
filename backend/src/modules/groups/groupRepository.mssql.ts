@@ -1,5 +1,5 @@
 import type { ConnectionPool } from "mssql"
-import type { Group, GroupMember, GroupRepository } from "./types.js"
+import type { Group, GroupMember, GroupRepository, MemberOrderEntry } from "./types.js"
 
 export class MssqlGroupRepository implements GroupRepository {
   constructor(private readonly getPool: () => Promise<ConnectionPool>) {}
@@ -43,5 +43,28 @@ export class MssqlGroupRepository implements GroupRepository {
       name: row.name,
       displayOrder: row.display_order,
     }))
+  }
+
+  async setMemberOrder(groupId: number, orders: MemberOrderEntry[]): Promise<void> {
+    const pool = await this.getPool()
+    const transaction = pool.transaction()
+    await transaction.begin()
+    try {
+      await transaction.request().input("groupId", groupId).query("DELETE FROM group_member_order WHERE group_id = @groupId")
+      for (const order of orders) {
+        await transaction
+          .request()
+          .input("groupId", groupId)
+          .input("userId", order.userId)
+          .input("displayOrder", order.displayOrder)
+          .query(
+            "INSERT INTO group_member_order (group_id, user_id, display_order) VALUES (@groupId, @userId, @displayOrder)",
+          )
+      }
+      await transaction.commit()
+    } catch (error) {
+      await transaction.rollback()
+      throw error
+    }
   }
 }

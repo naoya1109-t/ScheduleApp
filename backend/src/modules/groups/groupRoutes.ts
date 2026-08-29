@@ -1,5 +1,6 @@
 import { Router } from "express"
 import { asyncHandler } from "../../middleware/asyncHandler.js"
+import { requireAdmin } from "../../middleware/requireAdmin.js"
 import { requireAuth } from "../../middleware/requireAuth.js"
 import type { GroupRepository } from "./types.js"
 
@@ -26,6 +27,21 @@ export function createGroupRoutes(groupRepository: GroupRepository): Router {
     "/:groupId/members",
     asyncHandler(async (req, res) => {
       const groupId = Number(req.params.groupId)
+      res.json(await groupRepository.listMembersOrdered(groupId))
+    }),
+  )
+
+  router.put(
+    "/:groupId/member-order",
+    requireAdmin,
+    asyncHandler(async (req, res) => {
+      const groupId = Number(req.params.groupId)
+      const { orders } = req.body
+      if (!Array.isArray(orders)) {
+        res.status(400).json({ message: "orders は配列で指定してください" })
+        return
+      }
+      await groupRepository.setMemberOrder(groupId, orders)
       res.json(await groupRepository.listMembersOrdered(groupId))
     }),
   )

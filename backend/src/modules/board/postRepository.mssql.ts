@@ -156,6 +156,16 @@ export class MssqlPostRepository implements PostRepository {
     }
   }
 
+  async listIdsByUpdatedAtRange(from: string, to: string): Promise<number[]> {
+    const pool = await this.getPool()
+    const result = await pool
+      .request()
+      .input("from", from)
+      .input("to", to)
+      .query<{ post_id: number }>("SELECT post_id FROM post WHERE updated_at >= @from AND updated_at <= @to")
+    return result.recordset.map((row) => row.post_id)
+  }
+
   async listComments(postId: number): Promise<Comment[]> {
     const pool = await this.getPool()
     const result = await pool.request().input("postId", postId).query<{

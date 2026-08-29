@@ -1,4 +1,4 @@
-import type { Group, GroupMember, GroupRepository } from "../src/modules/groups/types.js"
+import type { Group, GroupMember, GroupRepository, MemberOrderEntry } from "../src/modules/groups/types.js"
 
 export class FakeGroupRepository implements GroupRepository {
   groups: Group[] = []
@@ -37,5 +37,14 @@ export class FakeGroupRepository implements GroupRepository {
         if (b.displayOrder === null) return -1
         return a.displayOrder - b.displayOrder
       })
+  }
+
+  async setMemberOrder(_groupId: number, orders: MemberOrderEntry[]): Promise<void> {
+    for (const order of orders) {
+      const info = this.members.get(order.userId)
+      if (info) {
+        info.displayOrder = order.displayOrder
+      }
+    }
   }
 }

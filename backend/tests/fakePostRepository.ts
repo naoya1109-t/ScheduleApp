@@ -104,4 +104,10 @@ export class FakePostRepository implements PostRepository {
   async isRead(postId: number, userId: number): Promise<boolean> {
     return this.reads.has(`${postId}:${userId}`)
   }
+
+  async listIdsByUpdatedAtRange(from: string, to: string): Promise<number[]> {
+    return this.posts
+      .filter((post) => post.updatedAt >= from && post.updatedAt <= to)
+      .map((post) => post.postId)
+  }
 }

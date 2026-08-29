@@ -22,3 +22,13 @@ export interface GroupMember {
 export function listGroupMembers(groupId: number): Promise<GroupMember[]> {
   return apiFetch<GroupMember[]>(`/api/groups/${groupId}/members`)
 }
+
+export function updateGroupMemberOrder(
+  groupId: number,
+  orders: { userId: number; displayOrder: number }[],
+): Promise<GroupMember[]> {
+  return apiFetch<GroupMember[]>(`/api/groups/${groupId}/member-order`, {
+    method: "PUT",
+    body: JSON.stringify({ orders }),
+  })
+}

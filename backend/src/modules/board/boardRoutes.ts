@@ -1,5 +1,6 @@
 import { Router } from "express"
 import { asyncHandler } from "../../middleware/asyncHandler.js"
+import { requireAdmin } from "../../middleware/requireAdmin.js"
 import { requireAuth } from "../../middleware/requireAuth.js"
 import type { PostService } from "./postService.js"
 
@@ -44,6 +45,34 @@ export function createBoardRoutes(postService: PostService): Router {
         return
       }
       res.json(post)
+    }),
+  )
+
+  router.get(
+    "/bulk-delete/preview",
+    requireAdmin,
+    asyncHandler(async (req, res) => {
+      const from = String(req.query.from)
+      const to = String(req.query.to)
+      if (!from || !to || from === "undefined" || to === "undefined") {
+        res.status(400).json({ message: "from, to は必須です" })
+        return
+      }
+      res.json(await postService.previewBulkDelete(from, to))
+    }),
+  )
+
+  router.post(
+    "/bulk-delete",
+    requireAdmin,
+    asyncHandler(async (req, res) => {
+      const { from, to } = req.body
+      if (!from || !to) {
+        res.status(400).json({ message: "from, to は必須です" })
+        return
+      }
+      const result = await postService.executeBulkDelete(from, to, req.session.userId!)
+      res.json(result)
     }),
   )
 

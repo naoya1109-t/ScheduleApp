@@ -2,7 +2,12 @@ import { HttpError } from "../../middleware/httpError.js"
 import type { CalendarService } from "../calendar/calendarService.js"
 import type { GroupRepository } from "../groups/types.js"
 import type { UserRepository } from "../users/types.js"
-import type { TopPageSettings, TopPageSettingsRepository, WeekGanttRow } from "./types.js"
+import type {
+  TopPageSettings,
+  TopPageSettingsRepository,
+  UpdateTopPageSettingsInput,
+  WeekGanttRow,
+} from "./types.js"
 
 export class TopPageService {
   constructor(
@@ -14,6 +19,10 @@ export class TopPageService {
 
   async getSettings(): Promise<TopPageSettings> {
     return this.settingsRepository.get()
+  }
+
+  async updateSettings(input: UpdateTopPageSettingsInput): Promise<TopPageSettings> {
+    return this.settingsRepository.update(input)
   }
 
   async getWeekGantt(
