@@ -138,7 +138,7 @@ export function WeeklySchedule() {
               key={day.toISOString()}
               className={`flex flex-col items-center gap-0.5 border-b border-r border-border p-1.5 text-center text-[11px] font-semibold ${
                 holiday
-                  ? "bg-coral-soft text-coral"
+                  ? "bg-coral text-white"
                   : isSameDay(day, today)
                     ? "bg-indigo-soft text-indigo"
                     : "bg-surface-alt text-text-soft"
@@ -148,7 +148,7 @@ export function WeeklySchedule() {
                 {WEEKDAY_LABELS[(day.getDay() + 6) % 7]} {formatMd(day)}
               </span>
               {holiday && (
-                <span className="rounded bg-coral px-1.5 py-0.5 text-[9px] font-bold text-white">
+                <span className="rounded bg-white/20 px-1.5 py-0.5 text-[9px] font-bold text-white">
                   {holiday.name}
                 </span>
               )}
