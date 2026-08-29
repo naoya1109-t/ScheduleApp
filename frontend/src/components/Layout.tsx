@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react"
+import { type ReactNode } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 
@@ -12,14 +12,6 @@ const NAV_ITEMS = [
   { to: "/incident-reports", label: "事故報告" },
 ]
 
-const ADMIN_MENU_ITEMS = [
-  { to: "/admin/users", label: "利用者管理" },
-  { to: "/admin/holidays", label: "祝日設定" },
-  { to: "/admin/top-settings", label: "表示件数設定" },
-  { to: "/admin/group-order", label: "表示順設定" },
-  { to: "/admin/bulk-delete", label: "掲示板一括削除" },
-]
-
 function GearIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -29,54 +21,22 @@ function GearIcon() {
   )
 }
 
-function AdminMenu() {
+function AdminLink() {
   const location = useLocation()
-  const [open, setOpen] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const isActiveSection = ADMIN_MENU_ITEMS.some((item) => item.to === location.pathname)
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
+  const isActiveSection = location.pathname.startsWith("/admin")
 
   return (
-    <div ref={containerRef} className="relative">
-      <button
-        onClick={() => setOpen((prev) => !prev)}
-        className={
-          isActiveSection
-            ? "flex items-center gap-1.5 border-b-2 border-indigo pb-1 text-sm font-bold text-indigo"
-            : "flex items-center gap-1.5 pb-1 text-sm text-text-soft"
-        }
-      >
-        <GearIcon />
-        管理
-      </button>
-      {open && (
-        <div className="absolute left-0 top-full z-10 mt-2 w-44 rounded-md border border-border bg-surface py-1 shadow-md">
-          {ADMIN_MENU_ITEMS.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              onClick={() => setOpen(false)}
-              className={
-                location.pathname === item.to
-                  ? "block px-4 py-2 text-sm font-bold text-indigo"
-                  : "block px-4 py-2 text-sm text-text hover:bg-surface-alt"
-              }
-            >
-              {item.label}
-            </Link>
-          ))}
-        </div>
-      )}
-    </div>
+    <Link
+      to="/admin"
+      className={
+        isActiveSection
+          ? "flex items-center gap-1.5 border-b-2 border-indigo pb-1 text-sm font-bold text-indigo"
+          : "flex items-center gap-1.5 pb-1 text-sm text-text-soft"
+      }
+    >
+      <GearIcon />
+      管理
+    </Link>
   )
 }
 
@@ -124,7 +84,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 {item.label}
               </Link>
             ))}
-            {user?.role === "admin" && <AdminMenu />}
+            {user?.role === "admin" && <AdminLink />}
           </nav>
         </div>
         <div className="flex items-center text-sm">

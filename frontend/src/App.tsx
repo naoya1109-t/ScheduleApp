@@ -3,6 +3,7 @@ import { Layout } from "./components/Layout"
 import { AuthProvider } from "./context/AuthContext"
 import { RequireAuth } from "./context/RequireAuth"
 import { LoginPage } from "./pages/login/LoginPage"
+import { AdminIndexPage } from "./pages/admin/AdminIndexPage"
 import { UsersPage } from "./pages/admin/users/UsersPage"
 import { HolidaysPage } from "./pages/admin/holidays/HolidaysPage"
 import { BoardListPage } from "./pages/board/BoardListPage"
@@ -175,6 +176,16 @@ function App() {
             <RequireAuth>
               <Layout>
                 <PostDetailPage />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <RequireAuth adminOnly>
+              <Layout>
+                <AdminIndexPage />
               </Layout>
             </RequireAuth>
           }
