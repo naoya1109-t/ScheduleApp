@@ -12,6 +12,7 @@ import { NewPostPage } from "./pages/board/NewPostPage"
 import { PostDetailPage } from "./pages/board/PostDetailPage"
 import { PostPermalinkRedirect } from "./pages/board/PostPermalinkRedirect"
 import { RoomsPage } from "./pages/rooms/RoomsPage"
+import { FilesPage } from "./pages/files/FilesPage"
 import { TopPage } from "./pages/top/TopPage"
 
 function App() {
@@ -55,6 +56,16 @@ function App() {
             <RequireAuth>
               <Layout>
                 <RoomsPage />
+              </Layout>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/files"
+          element={
+            <RequireAuth>
+              <Layout>
+                <FilesPage />
               </Layout>
             </RequireAuth>
           }

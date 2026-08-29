@@ -18,6 +18,10 @@ import { MssqlHolidayRepository } from "./modules/holidays/holidayRepository.mss
 import { createGroupRoutes } from "./modules/groups/groupRoutes.js"
 import { MssqlGroupRepository } from "./modules/groups/groupRepository.mssql.js"
 import { MssqlOperationLogRepository } from "./modules/logs/operationLogRepository.mssql.js"
+import { createFileRoutes } from "./modules/files/fileRoutes.js"
+import { FileService } from "./modules/files/fileService.js"
+import { MssqlFileRepository } from "./modules/files/fileRepository.mssql.js"
+import { MssqlFolderRepository } from "./modules/files/folderRepository.mssql.js"
 import { createRoomRoutes } from "./modules/rooms/roomRoutes.js"
 import { RoomService } from "./modules/rooms/roomService.js"
 import { MssqlRoomRepository } from "./modules/rooms/roomRepository.mssql.js"
@@ -76,6 +80,9 @@ const topPageService = new TopPageService(calendarService, groupRepository, user
 const roomRepository = new MssqlRoomRepository(getPool)
 const reservationRepository = new MssqlReservationRepository(getPool)
 const roomService = new RoomService(roomRepository, reservationRepository, eventRepository)
+const folderRepository = new MssqlFolderRepository(getPool)
+const fileRepository = new MssqlFileRepository(getPool)
+const fileService = new FileService(fileRepository, folderRepository, operationLogRepository, env.storageDir)
 
 app.use("/api/auth", createAuthRoutes(authService, userRepository))
 app.use("/api/admin/users", createUserRoutes(userService))
@@ -85,6 +92,7 @@ app.use("/api/holidays", createHolidayRoutes(holidayService))
 app.use("/api/groups", createGroupRoutes(groupRepository))
 app.use("/api/top-page", createTopPageRoutes(topPageService))
 app.use("/api/rooms", createRoomRoutes(roomService))
+app.use("/api/files", createFileRoutes(fileService, env.storageDir))
 
 app.use(errorHandler)
 

@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import type { VisibleOccurrence } from "../../api/calendar"
+import { listRecentFiles, type FileItem } from "../../api/files"
 import { listGroups, listMyGroups, type Group } from "../../api/groups"
 import { listPosts, type PostSummary } from "../../api/posts"
 import { getTopPageSettings, getWeekGantt, type WeekGanttRow } from "../../api/topPage"
@@ -36,7 +37,9 @@ export function TopPage() {
   const [groupId, setGroupId] = useState<number | null>(null)
   const [rows, setRows] = useState<WeekGanttRow[]>([])
   const [posts, setPosts] = useState<PostSummary[]>([])
+  const [files, setFiles] = useState<FileItem[]>([])
   const [boardCount, setBoardCount] = useState(5)
+  const [fileCount, setFileCount] = useState(5)
 
   const today = startOfToday()
   const days = Array.from({ length: 7 }, (_, i) => addDays(anchor, i))
@@ -58,12 +61,19 @@ export function TopPage() {
       .catch(() => undefined)
     getTopPageSettings()
       .then((settings) => {
-        if (!cancelled) setBoardCount(settings.boardDisplayCount)
+        if (cancelled) return
+        setBoardCount(settings.boardDisplayCount)
+        setFileCount(settings.fileDisplayCount)
       })
       .catch(() => undefined)
     listPosts()
       .then((data) => {
         if (!cancelled) setPosts(data)
+      })
+      .catch(() => undefined)
+    listRecentFiles(10)
+      .then((data) => {
+        if (!cancelled) setFiles(data)
       })
       .catch(() => undefined)
     return () => {
@@ -245,10 +255,29 @@ export function TopPage() {
 
         <div className="rounded-[14px] border border-border bg-surface shadow-sm">
           <div className="flex items-center justify-between bg-teal px-5 py-3.5">
-            <h2 className="text-[14.5px] font-bold text-white">ファイル共有</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-[14.5px] font-bold text-white">ファイル共有</h2>
+              <Link to="/files" className="rounded-md bg-white/20 px-2.5 py-1 text-[11.5px] font-bold text-white">
+                新規登録
+              </Link>
+            </div>
+            <Link to="/files" className="text-[12px] font-bold text-white/90">
+              もっと見る
+            </Link>
           </div>
           <div className="flex flex-col gap-3.5 p-5">
-            <p className="text-text-soft">ファイル共有機能は未実装です(タスク8で対応予定)。</p>
+            {files.slice(0, fileCount).map((file) => (
+              <div
+                key={file.fileId}
+                className="flex flex-col gap-0.5 border-b border-border pb-3 last:border-none last:pb-0"
+              >
+                <span className="text-[13.5px] font-semibold">{file.fileName}</span>
+                <span className="text-[11.5px] text-text-soft">
+                  更新者: {file.updatedByName} ・ {new Date(file.updatedAt).toLocaleDateString("ja-JP")}
+                </span>
+              </div>
+            ))}
+            {files.length === 0 && <p className="text-text-soft">ファイルはまだありません。</p>}
           </div>
         </div>
       </div>

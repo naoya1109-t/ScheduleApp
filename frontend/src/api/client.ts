@@ -29,3 +29,19 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
 
   return body as T
 }
+
+export async function apiUpload<T>(path: string, formData: FormData, method: "POST" = "POST"): Promise<T> {
+  const response = await fetch(path, {
+    method,
+    credentials: "include",
+    body: formData,
+  })
+
+  const body = await response.json().catch(() => undefined)
+
+  if (!response.ok) {
+    throw new ApiError(response.status, body?.message ?? "エラーが発生しました")
+  }
+
+  return body as T
+}
