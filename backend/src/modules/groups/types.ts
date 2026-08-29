@@ -27,7 +27,7 @@ export interface GroupRepository {
   /** グループを参照している投稿がある場合はHttpError(409)を投げる */
   delete(groupId: number): Promise<void>
   listMembersOrdered(groupId: number): Promise<GroupMember[]>
-  addMember(groupId: number, userId: number): Promise<void>
+  addMember(groupId: number, userId: number, name?: string): Promise<void>
   removeMember(groupId: number, userId: number): Promise<void>
   setMemberOrder(groupId: number, orders: MemberOrderEntry[]): Promise<void>
 }

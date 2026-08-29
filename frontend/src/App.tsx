@@ -23,13 +23,11 @@ import { IncidentReportListPage } from "./pages/incidentReports/IncidentReportLi
 import { NewIncidentReportPage } from "./pages/incidentReports/NewIncidentReportPage"
 import { IncidentReportDetailPage } from "./pages/incidentReports/IncidentReportDetailPage"
 import { TopSettingsPage } from "./pages/admin/topSettings/TopSettingsPage"
-import { GroupOrderPage } from "./pages/admin/groupOrder/GroupOrderPage"
 import { BulkDeletePage } from "./pages/admin/bulkDelete/BulkDeletePage"
 import { RoomsAdminPage } from "./pages/admin/rooms/RoomsAdminPage"
 import { NewRoomPage } from "./pages/admin/rooms/NewRoomPage"
 import { GroupsAdminPage } from "./pages/admin/groups/GroupsAdminPage"
 import { NewGroupPage } from "./pages/admin/groups/NewGroupPage"
-import { GroupMembersPage } from "./pages/admin/groups/GroupMembersPage"
 
 function App() {
   return (
@@ -237,16 +235,6 @@ function App() {
           }
         />
         <Route
-          path="/admin/group-order"
-          element={
-            <RequireAuth adminOnly>
-              <Layout>
-                <GroupOrderPage />
-              </Layout>
-            </RequireAuth>
-          }
-        />
-        <Route
           path="/admin/bulk-delete"
           element={
             <RequireAuth adminOnly>
@@ -292,16 +280,6 @@ function App() {
             <RequireAuth adminOnly>
               <Layout>
                 <NewGroupPage />
-              </Layout>
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/admin/groups/:groupId/members"
-          element={
-            <RequireAuth adminOnly>
-              <Layout>
-                <GroupMembersPage />
               </Layout>
             </RequireAuth>
           }

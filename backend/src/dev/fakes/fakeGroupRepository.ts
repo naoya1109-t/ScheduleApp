@@ -65,7 +65,8 @@ export class FakeGroupRepository implements GroupRepository {
     this.memberships.delete(groupId)
   }
 
-  async addMember(groupId: number, userId: number): Promise<void> {
+  async addMember(groupId: number, userId: number, name?: string): Promise<void> {
+    if (name !== undefined) this.userNames.set(userId, name)
     const existing = this.memberships.get(groupId) ?? []
     if (!existing.includes(userId)) existing.push(userId)
     this.memberships.set(groupId, existing)

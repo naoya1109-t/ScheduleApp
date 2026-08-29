@@ -47,6 +47,8 @@ async function main() {
     operationLogRepository,
   } = await seedDevData()
 
+  userRepository.setGroupRepository(groupRepository)
+
   const app = express()
   app.use(cors())
   app.use(express.json())

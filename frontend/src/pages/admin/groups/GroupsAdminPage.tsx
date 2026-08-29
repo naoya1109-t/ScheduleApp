@@ -59,6 +59,8 @@ export function GroupsAdminPage() {
         </Link>
       </div>
 
+      <p className="mb-4 text-[12px] text-text-soft">メンバーの追加・削除・表示順の設定は「利用者管理」から行います。</p>
+
       {error && <p className="mb-4 text-sm text-coral">{error}</p>}
 
       <div className="flex flex-col gap-2">
@@ -96,9 +98,6 @@ export function GroupsAdminPage() {
             >
               <span className="font-bold">{group.name}</span>
               <div className="flex items-center gap-3">
-                <Link to={`/admin/groups/${group.groupId}/members`} className="text-indigo">
-                  メンバー管理
-                </Link>
                 <button onClick={() => startEdit(group)} className="text-indigo">
                   編集
                 </button>

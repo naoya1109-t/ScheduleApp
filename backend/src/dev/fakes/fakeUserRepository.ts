@@ -1,3 +1,4 @@
+import type { GroupRepository } from "../../modules/groups/types.js"
 import type {
   UpdateUserInput,
   User,
@@ -14,6 +15,28 @@ function toSummary(user: User): UserSummary {
 export class FakeUserRepository implements UserRepository {
   private users: User[] = []
   private nextId = 1
+  private groupRepository: GroupRepository | null = null
+
+  /** モックサーバー用: ユーザー作成・更新時にグループ所属も連動させるための配線 */
+  setGroupRepository(groupRepository: GroupRepository): void {
+    this.groupRepository = groupRepository
+  }
+
+  private async syncGroups(userId: number, name: string, groupIds: number[]): Promise<void> {
+    if (!this.groupRepository) return
+    const current = await this.groupRepository.listGroupsForUser(userId)
+    const currentIds = current.map((group) => group.groupId)
+    for (const groupId of groupIds) {
+      if (!currentIds.includes(groupId)) {
+        await this.groupRepository.addMember(groupId, userId, name)
+      }
+    }
+    for (const groupId of currentIds) {
+      if (!groupIds.includes(groupId)) {
+        await this.groupRepository.removeMember(groupId, userId)
+      }
+    }
+  }
 
   seed(user: Omit<User, "userId">): User {
     const created: User = { ...user, userId: this.nextId++ }
@@ -51,6 +74,7 @@ export class FakeUserRepository implements UserRepository {
       role: input.role,
       status: "active",
     })
+    await this.syncGroups(created.userId, created.name, input.groupIds)
     return toSummary(created)
   }
 
@@ -63,6 +87,9 @@ export class FakeUserRepository implements UserRepository {
     if (input.email !== undefined) user.email = input.email
     if (input.employeeNo !== undefined) user.employeeNo = input.employeeNo
     if (input.role !== undefined) user.role = input.role
+    if (input.groupIds !== undefined) {
+      await this.syncGroups(userId, user.name, input.groupIds)
+    }
     return toSummary(user)
   }
 

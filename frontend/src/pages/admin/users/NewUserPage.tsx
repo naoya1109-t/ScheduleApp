@@ -1,6 +1,7 @@
-import { useState, type FormEvent } from "react"
+import { useEffect, useState, type FormEvent } from "react"
 import { useNavigate } from "react-router-dom"
 import { ApiError } from "../../../api/client"
+import { listGroups, type Group } from "../../../api/groups"
 import { createUser, type UserRole } from "../../../api/users"
 
 const emptyForm = {
@@ -15,15 +16,27 @@ const emptyForm = {
 export function NewUserPage() {
   const navigate = useNavigate()
   const [form, setForm] = useState(emptyForm)
+  const [groups, setGroups] = useState<Group[]>([])
+  const [groupIds, setGroupIds] = useState<number[]>([])
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    listGroups().then(setGroups)
+  }, [])
+
+  function toggleGroup(groupId: number) {
+    setGroupIds((prev) =>
+      prev.includes(groupId) ? prev.filter((id) => id !== groupId) : [...prev, groupId],
+    )
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     setError(null)
     setSubmitting(true)
     try {
-      await createUser({ ...form, groupIds: [] })
+      await createUser({ ...form, groupIds })
       navigate("/admin/users")
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "利用者の作成に失敗しました")
@@ -94,6 +107,22 @@ export function NewUserPage() {
             <option value="general">一般社員</option>
             <option value="admin">管理者</option>
           </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-[11.5px] font-bold text-text-soft">所属グループ(複数選択可)</label>
+          <div className="flex flex-col gap-1.5 rounded-md border border-border p-3">
+            {groups.map((group) => (
+              <label key={group.groupId} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={groupIds.includes(group.groupId)}
+                  onChange={() => toggleGroup(group.groupId)}
+                />
+                {group.name}
+              </label>
+            ))}
+            {groups.length === 0 && <p className="text-[12px] text-text-soft">グループがまだ登録されていません。</p>}
+          </div>
         </div>
 
         {error && <p className="text-sm text-coral">{error}</p>}
