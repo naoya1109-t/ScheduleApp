@@ -7,6 +7,19 @@ export class ApiError extends Error {
   }
 }
 
+let unauthorizedHandler: (() => void) | null = null
+
+/** セッション切れ(401)を検知した際に呼び出すハンドラを登録する(AuthContextから配線) */
+export function setUnauthorizedHandler(handler: () => void): void {
+  unauthorizedHandler = handler
+}
+
+function notifyIfUnauthorized(status: number): void {
+  if (status === 401) {
+    unauthorizedHandler?.()
+  }
+}
+
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(path, {
     credentials: "include",
@@ -16,6 +29,8 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
     },
     ...options,
   })
+
+  notifyIfUnauthorized(response.status)
 
   if (response.status === 204) {
     return undefined as T
@@ -36,6 +51,8 @@ export async function apiUpload<T>(path: string, formData: FormData, method: "PO
     credentials: "include",
     body: formData,
   })
+
+  notifyIfUnauthorized(response.status)
 
   const body = await response.json().catch(() => undefined)
 

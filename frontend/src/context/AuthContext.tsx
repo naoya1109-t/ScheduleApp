@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
 import { fetchCurrentUser, login as apiLogin, logout as apiLogout, type CurrentUser } from "../api/auth"
+import { setUnauthorizedHandler } from "../api/client"
 
 interface AuthContextValue {
   user: CurrentUser | null
@@ -19,6 +20,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then(setUser)
       .catch(() => setUser(null))
       .finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => setUser(null))
   }, [])
 
   async function login(loginId: string, password: string) {

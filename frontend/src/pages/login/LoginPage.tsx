@@ -12,7 +12,8 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
-  const redirectTo = (location.state as { from?: string } | null)?.from ?? "/"
+  const from = (location.state as { from?: string } | null)?.from
+  const redirectTo = from ?? "/"
 
   if (user) {
     return <Navigate to={redirectTo} replace />
@@ -42,6 +43,12 @@ export function LoginPage() {
           <img src="/caremax-mark.svg" alt="ケアマックスコーポレーション" className="h-9 w-auto" />
           <h1 className="text-[15px] font-bold">ケアマックス グループウェア</h1>
         </div>
+
+        {from && (
+          <p className="mb-4 rounded-md bg-surface-alt px-3 py-2 text-[12px] text-text-soft">
+            ログインの有効期限が切れました。再度ログインしてください。
+          </p>
+        )}
 
         <label className="mb-1 block text-[11.5px] font-bold text-text-soft" htmlFor="loginId">
           ログインID
