@@ -52,8 +52,6 @@ export function NewEventPage() {
     return Array.from(set)
   })()
 
-  const isSelfOnly = finalTargetIds.length === 1 && finalTargetIds[0] === user?.userId
-
   useEffect(() => {
     listRooms().then(setRooms)
   }, [])
@@ -115,12 +113,28 @@ export function NewEventPage() {
     if (form.roomId) {
       setSubmitting(true)
       try {
+        const roomId = Number(form.roomId)
+        const room = rooms.find((r) => r.roomId === roomId)
         await createReservation({
-          roomId: Number(form.roomId),
+          roomId,
           title: form.title,
           startAt: new Date(form.startAt).toISOString(),
           endAt: new Date(form.endAt).toISOString(),
         })
+        // 予約者本人の予定は会議室予約に連動して自動登録されるため、それ以外に選択されている参加者の予定を個別に登録する
+        const attendeeIds = finalTargetIds.filter((id) => id !== user?.userId)
+        for (const ownerId of attendeeIds) {
+          await createEvent({
+            title: room ? `[${room.name}] ${form.title}` : form.title,
+            startAt: new Date(form.startAt).toISOString(),
+            endAt: new Date(form.endAt).toISOString(),
+            visibility: "all",
+            isHidden: false,
+            isRecurring: false,
+            recurrenceRule: "none",
+            ownerId,
+          })
+        }
         navigate("/calendar")
       } catch (err) {
         setError(err instanceof ApiError ? err.message : "予定の登録に失敗しました")
@@ -200,13 +214,12 @@ export function NewEventPage() {
           </div>
         </div>
 
-        {!form.roomId && (
-          <div>
-            <label className="mb-1 block text-[11.5px] font-bold text-text-soft">
-              登録先の利用者(複数選択可)
-            </label>
-            <div className="flex flex-wrap items-center gap-2 rounded-md border border-border p-3">
-              {selectedGroupIds.map((groupId) => (
+        <div>
+          <label className="mb-1 block text-[11.5px] font-bold text-text-soft">
+            登録先の利用者(複数選択可)
+          </label>
+          <div className="flex flex-wrap items-center gap-2 rounded-md border border-border p-3">
+            {selectedGroupIds.map((groupId) => (
                 <span
                   key={`group-${groupId}`}
                   className="flex items-center gap-1.5 rounded-full bg-teal-soft px-2.5 py-1 text-[12px] font-bold text-teal"
@@ -248,39 +261,36 @@ export function NewEventPage() {
                   + 自分を追加
                 </button>
               )}
-              <button
-                type="button"
-                onClick={() => setPickerOpen(true)}
-                className="rounded-full border border-dashed border-border px-2.5 py-1 text-[12px] font-bold text-text-soft hover:border-indigo hover:text-indigo"
-              >
-                + 利用者を追加
-              </button>
-            </div>
-          </div>
-        )}
-
-        {isSelfOnly && (
-          <div>
-            <label className="mb-1 block text-[11.5px] font-bold text-text-soft">会議室(任意)</label>
-            <select
-              className="rounded-md border border-border px-3 py-2 text-sm"
-              value={form.roomId}
-              onChange={(e) => setForm({ ...form, roomId: e.target.value })}
+            <button
+              type="button"
+              onClick={() => setPickerOpen(true)}
+              className="rounded-full border border-dashed border-border px-2.5 py-1 text-[12px] font-bold text-text-soft hover:border-indigo hover:text-indigo"
             >
-              <option value="">選択しない</option>
-              {rooms.map((room) => (
-                <option key={room.roomId} value={room.roomId}>
-                  {room.name}
-                </option>
-              ))}
-            </select>
-            {form.roomId && (
-              <p className="mt-1 text-[11px] text-text-soft">
-                会議室を選択した場合、公開対象「全員」・非表示なし・繰り返しなしで登録されます。
-              </p>
-            )}
+              + 利用者を追加
+            </button>
           </div>
-        )}
+        </div>
+
+        <div>
+          <label className="mb-1 block text-[11.5px] font-bold text-text-soft">会議室(任意)</label>
+          <select
+            className="rounded-md border border-border px-3 py-2 text-sm"
+            value={form.roomId}
+            onChange={(e) => setForm({ ...form, roomId: e.target.value })}
+          >
+            <option value="">選択しない</option>
+            {rooms.map((room) => (
+              <option key={room.roomId} value={room.roomId}>
+                {room.name}
+              </option>
+            ))}
+          </select>
+          {form.roomId && (
+            <p className="mt-1 text-[11px] text-text-soft">
+              会議室を選択すると、自分の分は会議室予約として登録され、他に選択した利用者にも同じ内容が予定として登録されます(公開対象「全員」・非表示なし・繰り返しなし)。
+            </p>
+          )}
+        </div>
 
         {!form.roomId && (
           <div className="flex flex-wrap items-center gap-4">
