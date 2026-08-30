@@ -22,14 +22,20 @@ export function UserPickerModal({
   onClose: () => void
 }) {
   const [query, setQuery] = useState("")
+  const [activeGroupId, setActiveGroupId] = useState<number | null>(
+    groupedMembers[0]?.group.groupId ?? null,
+  )
   const normalizedQuery = query.trim()
+  const isSearching = normalizedQuery.length > 0
 
-  const visibleGroups = groupedMembers
-    .map(({ group, members }) => ({
-      group,
-      members: members.filter((member) => member.name.includes(normalizedQuery)),
-    }))
-    .filter(({ group, members }) => members.length > 0 || group.name.includes(normalizedQuery))
+  const visibleGroups = isSearching
+    ? groupedMembers
+        .map(({ group, members }) => ({
+          group,
+          members: members.filter((member) => member.name.includes(normalizedQuery)),
+        }))
+        .filter(({ group, members }) => members.length > 0 || group.name.includes(normalizedQuery))
+    : groupedMembers.filter(({ group }) => group.groupId === activeGroupId)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
@@ -45,18 +51,35 @@ export function UserPickerModal({
         </div>
 
         <input
-          className="mb-3 rounded-md border border-border px-3 py-2 text-sm"
+          className="mb-2 rounded-md border border-border px-3 py-2 text-sm"
           placeholder="名前・グループ名で検索"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           autoFocus
         />
 
+        {!isSearching && groupedMembers.length > 0 && (
+          <select
+            className="mb-3 rounded-md border border-border px-3 py-2 text-sm"
+            value={activeGroupId ?? ""}
+            onChange={(e) => setActiveGroupId(e.target.value ? Number(e.target.value) : null)}
+          >
+            {groupedMembers.map(({ group }) => (
+              <option key={group.groupId} value={group.groupId}>
+                {group.name}
+              </option>
+            ))}
+          </select>
+        )}
+
         <div className="flex-1 overflow-y-auto">
           {visibleGroups.map(({ group, members }) => {
             const isGroupSelected = selectedGroupIds.includes(group.groupId)
             return (
               <div key={group.groupId} className="mb-3">
+                {isSearching && (
+                  <div className="mb-1 text-[10.5px] font-bold text-text-soft">{group.name}</div>
+                )}
                 <label className="mb-1 flex items-center gap-2 rounded-md bg-surface-alt px-2 py-1.5 text-sm font-bold">
                   <input
                     type="checkbox"
