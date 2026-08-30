@@ -1,6 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react"
 import { Link, useSearchParams } from "react-router-dom"
-import { ApiError } from "../../api/client"
 import {
   createEvent,
   deleteEvent,
@@ -10,9 +9,10 @@ import {
   type RecurrenceRule,
   type VisibleOccurrence,
 } from "../../api/calendar"
+import { ApiError } from "../../api/client"
+import { listGroupMembers, listMyGroups } from "../../api/groups"
 import { listHolidaysInRange, type Holiday } from "../../api/holidays"
 import { createReservation, listRooms, type MeetingRoom } from "../../api/rooms"
-import { getDirectoryUser } from "../../api/userDirectory"
 import { useAuth } from "../../context/AuthContext"
 
 function rangeIso(): { from: string; to: string; fromDate: string; toDate: string } {
@@ -61,35 +61,51 @@ export function NewEventPage() {
   const [companyHolidays, setCompanyHolidays] = useState<VisibleOccurrence[]>([])
   const [holidays, setHolidays] = useState<Holiday[]>([])
   const [rooms, setRooms] = useState<MeetingRoom[]>([])
+  const [colleagues, setColleagues] = useState<{ userId: number; name: string }[]>([])
   const [form, setForm] = useState(() =>
     dateParam ? { ...emptyForm, startAt: `${dateParam}T09:00`, endAt: `${dateParam}T10:00` } : emptyForm,
   )
   const [error, setError] = useState<string | null>(null)
-  const [targetOwnerId] = useState<number | null>(() => {
-    if (!ownerIdParam) return null
-    const ownerId = Number(ownerIdParam)
-    return ownerId !== user?.userId ? ownerId : null
+  const [selectedUserIds, setSelectedUserIds] = useState<number[]>(() => {
+    if (ownerIdParam && user && Number(ownerIdParam) !== user.userId) {
+      return [Number(ownerIdParam)]
+    }
+    return user ? [user.userId] : []
   })
-  const [targetOwnerName, setTargetOwnerName] = useState<string | null>(null)
+
+  const isSelfOnly = selectedUserIds.length === 1 && selectedUserIds[0] === user?.userId
+  const viewOwnerId = selectedUserIds.length === 1 ? selectedUserIds[0] : (user?.userId ?? null)
 
   useEffect(() => {
     listRooms().then(setRooms)
   }, [])
 
   useEffect(() => {
-    if (targetOwnerId === null) return
+    if (!user) return
     let cancelled = false
-    getDirectoryUser(targetOwnerId)
-      .then((directoryUser) => {
-        if (!cancelled) setTargetOwnerName(directoryUser.name)
+    listMyGroups()
+      .then(async (groups) => {
+        const memberLists = await Promise.all(groups.map((group) => listGroupMembers(group.groupId)))
+        if (cancelled) return
+        const merged = new Map<number, string>()
+        for (const members of memberLists) {
+          for (const member of members) {
+            if (member.userId !== user.userId) merged.set(member.userId, member.name)
+          }
+        }
+        setColleagues(Array.from(merged, ([userId, name]) => ({ userId, name })))
       })
       .catch(() => undefined)
     return () => {
       cancelled = true
     }
-  }, [targetOwnerId])
+  }, [user])
 
-  const viewOwnerId = targetOwnerId ?? user?.userId ?? null
+  function toggleUser(userId: number) {
+    setSelectedUserIds((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId],
+    )
+  }
 
   async function reload() {
     if (viewOwnerId === null) return
@@ -132,15 +148,27 @@ export function NewEventPage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     setError(null)
-    try {
-      if (form.roomId) {
+    if (form.roomId) {
+      try {
         await createReservation({
           roomId: Number(form.roomId),
           title: form.title,
           startAt: new Date(form.startAt).toISOString(),
           endAt: new Date(form.endAt).toISOString(),
         })
-      } else {
+        setForm(emptyForm)
+        await reload()
+      } catch (err) {
+        setError(err instanceof ApiError ? err.message : "予定の登録に失敗しました")
+      }
+      return
+    }
+    if (selectedUserIds.length === 0) {
+      setError("登録先の利用者を1人以上選択してください")
+      return
+    }
+    try {
+      for (const ownerId of selectedUserIds) {
         await createEvent({
           title: form.title,
           startAt: new Date(form.startAt).toISOString(),
@@ -149,7 +177,7 @@ export function NewEventPage() {
           isHidden: form.isHidden,
           isRecurring: form.isRecurring,
           recurrenceRule: form.recurrenceRule,
-          ownerId: targetOwnerId ?? undefined,
+          ownerId,
         })
       }
       setForm(emptyForm)
@@ -194,17 +222,7 @@ export function NewEventPage() {
       <Link to="/calendar" className="mb-2 inline-block text-[12px] text-text-soft">
         ← スケジュールに戻る
       </Link>
-      <h1 className="mb-6 text-[18px] font-bold">
-        {targetOwnerId !== null
-          ? `${targetOwnerName ?? "利用者"}さんの予定登録(直近2週間)`
-          : "個人予定の登録(本日から2週間)"}
-      </h1>
-
-      {targetOwnerId !== null && (
-        <p className="mb-4 rounded-md bg-indigo-soft px-3 py-2 text-[12.5px] font-bold text-indigo">
-          {targetOwnerName ?? "利用者"}さんの予定として登録します
-        </p>
-      )}
+      <h1 className="mb-6 text-[18px] font-bold">予定の登録</h1>
 
       <form
         onSubmit={handleSubmit}
@@ -242,7 +260,40 @@ export function NewEventPage() {
           </div>
         </div>
 
-        {targetOwnerId === null && (
+        {!form.roomId && (
+          <div>
+            <label className="mb-1 block text-[11.5px] font-bold text-text-soft">
+              登録先の利用者(複数選択可)
+            </label>
+            <div className="flex flex-col gap-1.5 rounded-md border border-border p-3">
+              {user && (
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={selectedUserIds.includes(user.userId)}
+                    onChange={() => toggleUser(user.userId)}
+                  />
+                  自分({user.name})
+                </label>
+              )}
+              {colleagues.map((colleague) => (
+                <label key={colleague.userId} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={selectedUserIds.includes(colleague.userId)}
+                    onChange={() => toggleUser(colleague.userId)}
+                  />
+                  {colleague.name}
+                </label>
+              ))}
+              {colleagues.length === 0 && (
+                <p className="text-[12px] text-text-soft">同じグループの利用者がいません。</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {isSelfOnly && (
           <div>
             <label className="mb-1 block text-[11.5px] font-bold text-text-soft">会議室(任意)</label>
             <select
