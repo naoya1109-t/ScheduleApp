@@ -1,5 +1,4 @@
 import { HttpError } from "../../middleware/httpError.js"
-import type { GroupRepository } from "../groups/types.js"
 import { expandOccurrences } from "./occurrences.js"
 import type {
   CalendarEvent,
@@ -21,31 +20,7 @@ function assertCanModify(event: CalendarEvent, callerId: number, callerRole: Cal
 }
 
 export class CalendarService {
-  constructor(
-    private readonly repository: EventRepository,
-    private readonly groupRepository?: GroupRepository,
-  ) {}
-
-  /**
-   * 自分以外の利用者の予定を代理登録する場合、同じグループに所属していることを要求する
-   * (週表示のガントで見えている相手=自分と同じグループのメンバーに限定するため)
-   */
-  async assertCanCreateForOwner(callerId: number, ownerId: number): Promise<void> {
-    if (callerId === ownerId) {
-      return
-    }
-    if (!this.groupRepository) {
-      throw new HttpError(403, "他の利用者の予定を登録する権限がありません")
-    }
-    const [callerGroups, ownerGroups] = await Promise.all([
-      this.groupRepository.listGroupsForUser(callerId),
-      this.groupRepository.listGroupsForUser(ownerId),
-    ])
-    const sharesGroup = callerGroups.some((group) => ownerGroups.some((other) => other.groupId === group.groupId))
-    if (!sharesGroup) {
-      throw new HttpError(403, "同じグループに所属していない利用者の予定は登録できません")
-    }
-  }
+  constructor(private readonly repository: EventRepository) {}
 
   async createEvent(input: CreateEventInput) {
     const createdBy = input.createdBy ?? input.ownerId

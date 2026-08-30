@@ -66,7 +66,6 @@ export function createCalendarRoutes(calendarService: CalendarService): Router {
       }
       const callerId = req.session.userId!
       const ownerId = req.body.ownerId !== undefined ? Number(req.body.ownerId) : callerId
-      await calendarService.assertCanCreateForOwner(callerId, ownerId)
       const created = await calendarService.createEvent({
         ownerId,
         createdBy: callerId,

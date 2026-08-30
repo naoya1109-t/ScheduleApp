@@ -68,7 +68,7 @@ async function main() {
 
   const authService = new AuthService(userRepository)
   const userService = new UserService(userRepository)
-  const calendarService = new CalendarService(eventRepository, groupRepository)
+  const calendarService = new CalendarService(eventRepository)
   const postService = new PostService(postRepository, operationLogRepository, "./storage")
   const holidayService = new HolidayService(holidayRepository, new HttpJapaneseHolidaySource())
   const topPageService = new TopPageService(calendarService, groupRepository, userRepository, topPageSettingsRepository)

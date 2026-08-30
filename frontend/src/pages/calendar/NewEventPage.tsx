@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { createEvent, type EventVisibility, type RecurrenceRule } from "../../api/calendar"
 import { ApiError } from "../../api/client"
-import { listGroupMembers, listMyGroups } from "../../api/groups"
+import { listGroupMembers, listGroups } from "../../api/groups"
 import { createReservation, listRooms, type MeetingRoom } from "../../api/rooms"
 import { UserPickerModal, type GroupedMembers } from "../../components/UserPickerModal"
 import { useAuth } from "../../context/AuthContext"
@@ -59,7 +59,7 @@ export function NewEventPage() {
   useEffect(() => {
     if (!user) return
     let cancelled = false
-    listMyGroups()
+    listGroups()
       .then(async (groups) => {
         const memberLists = await Promise.all(groups.map((group) => listGroupMembers(group.groupId)))
         if (cancelled) return
