@@ -4,6 +4,7 @@ import { createEvent, type EventVisibility, type RecurrenceRule } from "../../ap
 import { ApiError } from "../../api/client"
 import { listGroupMembers, listMyGroups } from "../../api/groups"
 import { createReservation, listRooms, type MeetingRoom } from "../../api/rooms"
+import { UserPickerModal, type GroupedMembers } from "../../components/UserPickerModal"
 import { useAuth } from "../../context/AuthContext"
 
 const emptyForm = {
@@ -25,7 +26,8 @@ export function NewEventPage() {
   const ownerIdParam = searchParams.get("ownerId")
 
   const [rooms, setRooms] = useState<MeetingRoom[]>([])
-  const [colleagues, setColleagues] = useState<{ userId: number; name: string }[]>([])
+  const [groupedMembers, setGroupedMembers] = useState<GroupedMembers[]>([])
+  const [pickerOpen, setPickerOpen] = useState(false)
   const [form, setForm] = useState(() =>
     dateParam ? { ...emptyForm, startAt: `${dateParam}T09:00`, endAt: `${dateParam}T10:00` } : emptyForm,
   )
@@ -51,13 +53,12 @@ export function NewEventPage() {
       .then(async (groups) => {
         const memberLists = await Promise.all(groups.map((group) => listGroupMembers(group.groupId)))
         if (cancelled) return
-        const merged = new Map<number, string>()
-        for (const members of memberLists) {
-          for (const member of members) {
-            if (member.userId !== user.userId) merged.set(member.userId, member.name)
-          }
-        }
-        setColleagues(Array.from(merged, ([userId, name]) => ({ userId, name })))
+        setGroupedMembers(
+          groups.map((group, index) => ({
+            group,
+            members: memberLists[index].filter((member) => member.userId !== user.userId),
+          })),
+        )
       })
       .catch(() => undefined)
     return () => {
@@ -65,10 +66,31 @@ export function NewEventPage() {
     }
   }, [user])
 
+  function getUserName(userId: number): string {
+    if (userId === user?.userId) return `自分(${user.name})`
+    for (const { members } of groupedMembers) {
+      const found = members.find((member) => member.userId === userId)
+      if (found) return found.name
+    }
+    return "利用者"
+  }
+
   function toggleUser(userId: number) {
     setSelectedUserIds((prev) =>
       prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId],
     )
+  }
+
+  function toggleGroup(memberIds: number[]) {
+    setSelectedUserIds((prev) => {
+      const allSelected = memberIds.every((id) => prev.includes(id))
+      if (allSelected) {
+        return prev.filter((id) => !memberIds.includes(id))
+      }
+      const next = new Set(prev)
+      for (const id of memberIds) next.add(id)
+      return Array.from(next)
+    })
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -168,30 +190,41 @@ export function NewEventPage() {
             <label className="mb-1 block text-[11.5px] font-bold text-text-soft">
               登録先の利用者(複数選択可)
             </label>
-            <div className="flex flex-col gap-1.5 rounded-md border border-border p-3">
-              {user && (
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={selectedUserIds.includes(user.userId)}
-                    onChange={() => toggleUser(user.userId)}
-                  />
-                  自分({user.name})
-                </label>
-              )}
-              {colleagues.map((colleague) => (
-                <label key={colleague.userId} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={selectedUserIds.includes(colleague.userId)}
-                    onChange={() => toggleUser(colleague.userId)}
-                  />
-                  {colleague.name}
-                </label>
+            <div className="flex flex-wrap items-center gap-2 rounded-md border border-border p-3">
+              {selectedUserIds.map((userId) => (
+                <span
+                  key={userId}
+                  className="flex items-center gap-1.5 rounded-full bg-indigo-soft px-2.5 py-1 text-[12px] font-bold text-indigo"
+                >
+                  {getUserName(userId)}
+                  <button
+                    type="button"
+                    onClick={() => toggleUser(userId)}
+                    className="text-indigo/70 hover:text-indigo"
+                  >
+                    ✕
+                  </button>
+                </span>
               ))}
-              {colleagues.length === 0 && (
-                <p className="text-[12px] text-text-soft">同じグループの利用者がいません。</p>
+              {selectedUserIds.length === 0 && (
+                <span className="text-[12px] text-text-soft">利用者が選択されていません</span>
               )}
+              {user && !selectedUserIds.includes(user.userId) && (
+                <button
+                  type="button"
+                  onClick={() => toggleUser(user.userId)}
+                  className="rounded-full border border-dashed border-border px-2.5 py-1 text-[12px] font-bold text-text-soft hover:border-indigo hover:text-indigo"
+                >
+                  + 自分を追加
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setPickerOpen(true)}
+                className="rounded-full border border-dashed border-border px-2.5 py-1 text-[12px] font-bold text-text-soft hover:border-indigo hover:text-indigo"
+              >
+                + 利用者を追加
+              </button>
             </div>
           </div>
         )}
@@ -271,6 +304,16 @@ export function NewEventPage() {
           {submitting ? "登録中..." : "登録する"}
         </button>
       </form>
+
+      {pickerOpen && (
+        <UserPickerModal
+          groupedMembers={groupedMembers}
+          selectedUserIds={selectedUserIds}
+          onToggleUser={toggleUser}
+          onToggleGroup={toggleGroup}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
     </div>
   )
 }
