@@ -1,32 +1,10 @@
 import { useEffect, useState, type FormEvent } from "react"
-import { Link, useSearchParams } from "react-router-dom"
-import {
-  createEvent,
-  deleteEvent,
-  listCompanyHolidays,
-  listEvents,
-  type EventVisibility,
-  type RecurrenceRule,
-  type VisibleOccurrence,
-} from "../../api/calendar"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
+import { createEvent, type EventVisibility, type RecurrenceRule } from "../../api/calendar"
 import { ApiError } from "../../api/client"
 import { listGroupMembers, listMyGroups } from "../../api/groups"
-import { listHolidaysInRange, type Holiday } from "../../api/holidays"
 import { createReservation, listRooms, type MeetingRoom } from "../../api/rooms"
 import { useAuth } from "../../context/AuthContext"
-
-function rangeIso(): { from: string; to: string; fromDate: string; toDate: string } {
-  const now = new Date()
-  const from = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const to = new Date(from)
-  to.setDate(to.getDate() + 14)
-  return {
-    from: from.toISOString(),
-    to: to.toISOString(),
-    fromDate: from.toISOString().slice(0, 10),
-    toDate: to.toISOString().slice(0, 10),
-  }
-}
 
 const emptyForm = {
   title: "",
@@ -39,33 +17,20 @@ const emptyForm = {
   roomId: "",
 }
 
-type TimelineItem =
-  | { kind: "event"; key: string; sortKey: string; occurrence: VisibleOccurrence }
-  | {
-      kind: "holiday"
-      key: string
-      sortKey: string
-      label: string
-      name: string
-      eventId?: number
-      ownerId?: number
-    }
-
 export function NewEventPage() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const dateParam = searchParams.get("date")
   const ownerIdParam = searchParams.get("ownerId")
 
-  const [events, setEvents] = useState<VisibleOccurrence[]>([])
-  const [companyHolidays, setCompanyHolidays] = useState<VisibleOccurrence[]>([])
-  const [holidays, setHolidays] = useState<Holiday[]>([])
   const [rooms, setRooms] = useState<MeetingRoom[]>([])
   const [colleagues, setColleagues] = useState<{ userId: number; name: string }[]>([])
   const [form, setForm] = useState(() =>
     dateParam ? { ...emptyForm, startAt: `${dateParam}T09:00`, endAt: `${dateParam}T10:00` } : emptyForm,
   )
   const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>(() => {
     if (ownerIdParam && user && Number(ownerIdParam) !== user.userId) {
       return [Number(ownerIdParam)]
@@ -74,7 +39,6 @@ export function NewEventPage() {
   })
 
   const isSelfOnly = selectedUserIds.length === 1 && selectedUserIds[0] === user?.userId
-  const viewOwnerId = selectedUserIds.length === 1 ? selectedUserIds[0] : (user?.userId ?? null)
 
   useEffect(() => {
     listRooms().then(setRooms)
@@ -107,48 +71,12 @@ export function NewEventPage() {
     )
   }
 
-  async function reload() {
-    if (viewOwnerId === null) return
-    const { from, to, fromDate, toDate } = rangeIso()
-    const [eventData, companyHolidayData, holidayData] = await Promise.all([
-      listEvents(viewOwnerId, from, to),
-      listCompanyHolidays(from, to),
-      listHolidaysInRange(fromDate, toDate),
-    ])
-    setEvents(eventData)
-    setCompanyHolidays(companyHolidayData)
-    setHolidays(holidayData)
-  }
-
-  useEffect(() => {
-    if (viewOwnerId === null) return
-    let cancelled = false
-    const { from, to, fromDate, toDate } = rangeIso()
-
-    Promise.all([
-      listEvents(viewOwnerId, from, to),
-      listCompanyHolidays(from, to),
-      listHolidaysInRange(fromDate, toDate),
-    ])
-      .then(([eventData, companyHolidayData, holidayData]) => {
-        if (cancelled) return
-        setEvents(eventData)
-        setCompanyHolidays(companyHolidayData)
-        setHolidays(holidayData)
-      })
-      .catch(() => {
-        if (!cancelled) setError("予定の取得に失敗しました")
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [viewOwnerId])
-
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     setError(null)
+
     if (form.roomId) {
+      setSubmitting(true)
       try {
         await createReservation({
           roomId: Number(form.roomId),
@@ -156,17 +84,21 @@ export function NewEventPage() {
           startAt: new Date(form.startAt).toISOString(),
           endAt: new Date(form.endAt).toISOString(),
         })
-        setForm(emptyForm)
-        await reload()
+        navigate("/calendar")
       } catch (err) {
         setError(err instanceof ApiError ? err.message : "予定の登録に失敗しました")
+      } finally {
+        setSubmitting(false)
       }
       return
     }
+
     if (selectedUserIds.length === 0) {
       setError("登録先の利用者を1人以上選択してください")
       return
     }
+
+    setSubmitting(true)
     try {
       for (const ownerId of selectedUserIds) {
         await createEvent({
@@ -180,45 +112,16 @@ export function NewEventPage() {
           ownerId,
         })
       }
-      setForm(emptyForm)
-      await reload()
+      navigate("/calendar")
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "予定の登録に失敗しました")
+    } finally {
+      setSubmitting(false)
     }
   }
 
-  async function handleDelete(eventId: number) {
-    await deleteEvent(eventId)
-    await reload()
-  }
-
-  const timeline: TimelineItem[] = [
-    ...holidays.map((holiday) => ({
-      kind: "holiday" as const,
-      key: `holiday-${holiday.holidayId}`,
-      sortKey: `${holiday.holidayDate}T00:00:00.000Z`,
-      label: "祝日",
-      name: holiday.name,
-    })),
-    ...companyHolidays.map((occurrence) => ({
-      kind: "holiday" as const,
-      key: `company-${occurrence.eventId}`,
-      sortKey: occurrence.startAt,
-      label: "会社休日",
-      name: occurrence.title ?? "",
-      eventId: occurrence.eventId,
-      ownerId: occurrence.ownerId,
-    })),
-    ...events.map((occurrence) => ({
-      kind: "event" as const,
-      key: `event-${occurrence.eventId}-${occurrence.startAt}`,
-      sortKey: occurrence.startAt,
-      occurrence,
-    })),
-  ].sort((a, b) => a.sortKey.localeCompare(b.sortKey))
-
   return (
-    <div className="mx-auto max-w-[800px] p-8">
+    <div className="mx-auto max-w-[600px] p-8">
       <Link to="/calendar" className="mb-2 inline-block text-[12px] text-text-soft">
         ← スケジュールに戻る
       </Link>
@@ -226,7 +129,7 @@ export function NewEventPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="mb-8 flex flex-col gap-4 rounded-[14px] border border-border bg-surface p-6"
+        className="flex flex-col gap-4 rounded-[14px] border border-border bg-surface p-6"
       >
         <div>
           <label className="mb-1 block text-[11.5px] font-bold text-text-soft">タイトル</label>
@@ -360,70 +263,14 @@ export function NewEventPage() {
         )}
 
         {error && <p className="text-sm text-coral">{error}</p>}
-        <button type="submit" className="rounded-md bg-indigo py-2 text-sm font-bold text-white">
-          登録
+        <button
+          type="submit"
+          disabled={submitting}
+          className="rounded-md bg-indigo py-2 text-sm font-bold text-white disabled:opacity-60"
+        >
+          {submitting ? "登録中..." : "登録する"}
         </button>
       </form>
-
-      <div className="flex flex-col gap-2">
-        {timeline.map((item) => {
-          if (item.kind === "holiday") {
-            const canEdit =
-              item.eventId !== undefined && (user?.role === "admin" || item.ownerId === user?.userId)
-            return (
-              <div
-                key={item.key}
-                className="flex items-center gap-3 rounded-md border border-coral-soft bg-coral-soft px-4 py-3 text-sm"
-              >
-                <span className="rounded bg-coral px-1.5 py-0.5 text-[10px] font-bold text-white">
-                  {item.label}
-                </span>
-                {canEdit ? (
-                  <Link
-                    to={`/calendar/events/${item.eventId}/edit`}
-                    className="font-bold underline decoration-dotted underline-offset-2"
-                  >
-                    {item.name}
-                  </Link>
-                ) : (
-                  <span className="font-bold">{item.name}</span>
-                )}
-              </div>
-            )
-          }
-          return (
-            <div
-              key={item.key}
-              className="flex items-center justify-between rounded-md border border-border bg-surface px-4 py-3 text-sm"
-            >
-              <div>
-                {item.occurrence.canManage ? (
-                  <Link
-                    to={`/calendar/events/${item.occurrence.eventId}/edit`}
-                    className="font-bold underline decoration-dotted underline-offset-2"
-                  >
-                    {item.occurrence.isBusyOnly ? "予定あり" : item.occurrence.title}
-                  </Link>
-                ) : (
-                  <span className="font-bold">
-                    {item.occurrence.isBusyOnly ? "予定あり" : item.occurrence.title}
-                  </span>
-                )}
-                <span className="ml-3 text-text-soft">
-                  {new Date(item.occurrence.startAt).toLocaleString("ja-JP")} 〜{" "}
-                  {new Date(item.occurrence.endAt).toLocaleString("ja-JP")}
-                </span>
-              </div>
-              {item.occurrence.canManage && (
-                <button onClick={() => handleDelete(item.occurrence.eventId)} className="text-coral">
-                  削除
-                </button>
-              )}
-            </div>
-          )
-        })}
-        {timeline.length === 0 && <p className="text-text-soft">予定はまだありません。</p>}
-      </div>
     </div>
   )
 }
