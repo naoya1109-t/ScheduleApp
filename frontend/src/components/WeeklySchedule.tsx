@@ -186,10 +186,17 @@ export function WeeklySchedule() {
               return (
                 <div
                   key={`${row.userId}-${day.toISOString()}`}
-                  className={`flex min-h-[54px] flex-col justify-center gap-1 border-b border-r border-border-strong p-1.5 ${
+                  className={`group relative flex min-h-[54px] flex-col justify-center gap-1 border-b border-r border-border-strong p-1.5 ${
                     holiday ? "bg-coral-soft" : isSameDay(day, today) ? "bg-indigo-soft" : "bg-white"
                   }`}
                 >
+                  <Link
+                    to={`/calendar/new?date=${toDateOnly(day)}&ownerId=${row.userId}`}
+                    title="この日の予定を登録"
+                    className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded bg-white/70 text-[12px] font-bold leading-none text-text-soft opacity-0 transition-opacity hover:bg-white hover:text-indigo group-hover:opacity-100"
+                  >
+                    +
+                  </Link>
                   {dayOccurrences.map((occurrence) =>
                     occurrence.isOwnEvent ? (
                       <Link

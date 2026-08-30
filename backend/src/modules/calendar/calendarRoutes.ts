@@ -64,8 +64,11 @@ export function createCalendarRoutes(calendarService: CalendarService): Router {
         res.status(400).json({ message: "visibility は必須です" })
         return
       }
+      const callerId = req.session.userId!
+      const ownerId = req.body.ownerId !== undefined ? Number(req.body.ownerId) : callerId
+      await calendarService.assertCanCreateForOwner(callerId, ownerId)
       const created = await calendarService.createEvent({
-        ownerId: req.session.userId!,
+        ownerId,
         title,
         startAt,
         endAt,

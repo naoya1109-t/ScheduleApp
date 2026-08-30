@@ -35,6 +35,7 @@ export interface CreatePersonalEventInput {
   isHidden: boolean
   isRecurring: boolean
   recurrenceRule: RecurrenceRule
+  ownerId?: number
 }
 
 export interface CreateCompanyHolidayInput {

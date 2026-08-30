@@ -2,14 +2,16 @@ import { describe, expect, it } from "vitest"
 import { CalendarService } from "../src/modules/calendar/calendarService.js"
 import { HttpError } from "../src/middleware/httpError.js"
 import { FakeEventRepository } from "./fakeEventRepository.js"
+import { FakeGroupRepository } from "./fakeGroupRepository.js"
 
 const RANGE_FROM = "2026-09-01T00:00:00.000Z"
 const RANGE_TO = "2026-09-07T23:59:59.000Z"
 
 function setup() {
   const repository = new FakeEventRepository()
-  const service = new CalendarService(repository)
-  return { repository, service }
+  const groupRepository = new FakeGroupRepository()
+  const service = new CalendarService(repository, groupRepository)
+  return { repository, groupRepository, service }
 }
 
 describe("CalendarService 公開対象・非表示のマスキングルール", () => {
@@ -241,5 +243,38 @@ describe("CalendarService 会社休日", () => {
     expect(holidays).toHaveLength(1)
     expect(holidays[0].title).toBe("夏季休暇")
     expect(holidays[0].isBusyOnly).toBe(false)
+  })
+})
+
+describe("CalendarService 他利用者への代理登録", () => {
+  it("自分自身への登録は常に許可される", async () => {
+    const { service } = setup()
+    await expect(service.assertCanCreateForOwner(1, 1)).resolves.not.toThrow()
+  })
+
+  it("同じグループに所属していれば他人への代理登録が許可される", async () => {
+    const { groupRepository, service } = setup()
+    groupRepository.addGroup({ groupId: 1, name: "営業部" })
+    groupRepository.seedMember(1, 1, "山田太郎")
+    groupRepository.seedMember(1, 2, "鈴木花子")
+
+    await expect(service.assertCanCreateForOwner(1, 2)).resolves.not.toThrow()
+  })
+
+  it("同じグループに所属していない他人への代理登録は拒否される", async () => {
+    const { groupRepository, service } = setup()
+    groupRepository.addGroup({ groupId: 1, name: "営業部" })
+    groupRepository.addGroup({ groupId: 2, name: "総務部" })
+    groupRepository.seedMember(1, 1, "山田太郎")
+    groupRepository.seedMember(2, 2, "鈴木花子")
+
+    await expect(service.assertCanCreateForOwner(1, 2)).rejects.toThrow(HttpError)
+  })
+
+  it("グループ情報が配線されていない場合、他人への代理登録は拒否される", async () => {
+    const repository = new FakeEventRepository()
+    const service = new CalendarService(repository)
+
+    await expect(service.assertCanCreateForOwner(1, 2)).rejects.toThrow(HttpError)
   })
 })

@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react"
-import { Link } from "react-router-dom"
+import { Link, useSearchParams } from "react-router-dom"
 import { ApiError } from "../../api/client"
 import {
   createEvent,
@@ -12,6 +12,7 @@ import {
 } from "../../api/calendar"
 import { listHolidaysInRange, type Holiday } from "../../api/holidays"
 import { createReservation, listRooms, type MeetingRoom } from "../../api/rooms"
+import { getDirectoryUser } from "../../api/userDirectory"
 import { useAuth } from "../../context/AuthContext"
 
 function rangeIso(): { from: string; to: string; fromDate: string; toDate: string } {
@@ -53,16 +54,41 @@ type TimelineItem =
 
 export function NewEventPage() {
   const { user } = useAuth()
+  const [searchParams] = useSearchParams()
+  const dateParam = searchParams.get("date")
+  const ownerIdParam = searchParams.get("ownerId")
+
   const [events, setEvents] = useState<VisibleOccurrence[]>([])
   const [companyHolidays, setCompanyHolidays] = useState<VisibleOccurrence[]>([])
   const [holidays, setHolidays] = useState<Holiday[]>([])
   const [rooms, setRooms] = useState<MeetingRoom[]>([])
-  const [form, setForm] = useState(emptyForm)
+  const [form, setForm] = useState(() =>
+    dateParam ? { ...emptyForm, startAt: `${dateParam}T09:00`, endAt: `${dateParam}T10:00` } : emptyForm,
+  )
   const [error, setError] = useState<string | null>(null)
+  const [targetOwnerId] = useState<number | null>(() => {
+    if (!ownerIdParam) return null
+    const ownerId = Number(ownerIdParam)
+    return ownerId !== user?.userId ? ownerId : null
+  })
+  const [targetOwnerName, setTargetOwnerName] = useState<string | null>(null)
 
   useEffect(() => {
     listRooms().then(setRooms)
   }, [])
+
+  useEffect(() => {
+    if (targetOwnerId === null) return
+    let cancelled = false
+    getDirectoryUser(targetOwnerId)
+      .then((directoryUser) => {
+        if (!cancelled) setTargetOwnerName(directoryUser.name)
+      })
+      .catch(() => undefined)
+    return () => {
+      cancelled = true
+    }
+  }, [targetOwnerId])
 
   async function reload() {
     if (!user) return
@@ -129,6 +155,7 @@ export function NewEventPage() {
           isHidden: form.isHidden,
           isRecurring: form.isRecurring,
           recurrenceRule: form.recurrenceRule,
+          ownerId: targetOwnerId ?? undefined,
         })
       }
       setForm(emptyForm)
@@ -175,6 +202,12 @@ export function NewEventPage() {
       </Link>
       <h1 className="mb-6 text-[18px] font-bold">個人予定の登録(本日から2週間)</h1>
 
+      {targetOwnerId !== null && (
+        <p className="mb-4 rounded-md bg-indigo-soft px-3 py-2 text-[12.5px] font-bold text-indigo">
+          {targetOwnerName ?? "利用者"}さんの予定として登録します
+        </p>
+      )}
+
       <form
         onSubmit={handleSubmit}
         className="mb-8 flex flex-col gap-4 rounded-[14px] border border-border bg-surface p-6"
@@ -211,16 +244,18 @@ export function NewEventPage() {
           </div>
         </div>
 
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={form.isCompanyHoliday}
-            onChange={(e) => setForm({ ...form, isCompanyHoliday: e.target.checked })}
-          />
-          会社休日として登録する(公開対象「全員」で全社員に共有されます)
-        </label>
+        {targetOwnerId === null && (
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={form.isCompanyHoliday}
+              onChange={(e) => setForm({ ...form, isCompanyHoliday: e.target.checked })}
+            />
+            会社休日として登録する(公開対象「全員」で全社員に共有されます)
+          </label>
+        )}
 
-        {!form.isCompanyHoliday && (
+        {targetOwnerId === null && !form.isCompanyHoliday && (
           <div>
             <label className="mb-1 block text-[11.5px] font-bold text-text-soft">会議室(任意)</label>
             <select
