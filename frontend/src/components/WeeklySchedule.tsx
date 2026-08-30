@@ -115,8 +115,8 @@ export function WeeklySchedule() {
         </div>
       </div>
 
-      <div className="grid grid-cols-[132px_repeat(7,1fr)] border-l border-t border-border">
-        <div className="flex flex-col gap-1 border-b border-r border-border bg-surface-alt p-1.5">
+      <div className="grid grid-cols-[132px_repeat(7,1fr)] border-l border-t border-border-strong">
+        <div className="flex flex-col gap-1 border-b border-r border-border-strong bg-surface-alt p-1.5">
           <div className="text-[9px] font-medium text-text-soft">表示グループ</div>
           <select
             className="rounded-md border border-border bg-white px-2 py-1 text-[11.5px] font-bold"
@@ -146,7 +146,7 @@ export function WeeklySchedule() {
           return (
             <div
               key={day.toISOString()}
-              className={`flex flex-col items-center gap-0.5 border-b border-r border-border p-1.5 text-center text-[11px] font-semibold ${headerClass}`}
+              className={`flex flex-col items-center gap-0.5 border-b border-r border-border-strong p-1.5 text-center text-[11px] font-semibold ${headerClass}`}
             >
               <span>
                 {WEEKDAY_LABELS[(day.getDay() + 6) % 7]} {formatMd(day)}
@@ -165,7 +165,7 @@ export function WeeklySchedule() {
 
         {rows.map((row) => (
           <Fragment key={row.userId}>
-            <div className="flex flex-col gap-1.5 justify-center border-b border-r border-border p-2">
+            <div className="flex flex-col gap-1.5 justify-center border-b border-r border-border-strong p-2">
               <button
                 onClick={() => setSelectedUserId(row.userId)}
                 className="flex items-center gap-1.5 text-left text-[13px] font-bold text-text underline decoration-dotted underline-offset-2"
@@ -186,7 +186,7 @@ export function WeeklySchedule() {
               return (
                 <div
                   key={`${row.userId}-${day.toISOString()}`}
-                  className={`flex min-h-[54px] flex-col justify-center gap-1 border-b border-r border-border p-1.5 ${
+                  className={`flex min-h-[54px] flex-col justify-center gap-1 border-b border-r border-border-strong p-1.5 ${
                     holiday ? "bg-coral-soft" : isSameDay(day, today) ? "bg-indigo-soft" : "bg-white"
                   }`}
                 >
