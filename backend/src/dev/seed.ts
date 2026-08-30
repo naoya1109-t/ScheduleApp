@@ -109,6 +109,7 @@ export async function seedDevData() {
 
   await eventRepository.create({
     ownerId: admin.userId,
+    createdBy: admin.userId,
     title: "定例MTG",
     startAt: isoAt(0, 10, 0),
     endAt: isoAt(0, 11, 0),
@@ -120,6 +121,7 @@ export async function seedDevData() {
   })
   await eventRepository.create({
     ownerId: staffA.userId,
+    createdBy: staffA.userId,
     title: "来客対応",
     startAt: isoAt(1, 13, 0),
     endAt: isoAt(1, 14, 30),
@@ -131,6 +133,7 @@ export async function seedDevData() {
   })
   await eventRepository.create({
     ownerId: staffB.userId,
+    createdBy: staffB.userId,
     title: "非公開の予定",
     startAt: isoAt(2, 9, 0),
     endAt: isoAt(2, 10, 0),
@@ -142,6 +145,7 @@ export async function seedDevData() {
   })
   await eventRepository.create({
     ownerId: admin.userId,
+    createdBy: admin.userId,
     title: "夏季休暇",
     startAt: isoAt(3, 0, 0),
     endAt: isoAt(3, 23, 59),

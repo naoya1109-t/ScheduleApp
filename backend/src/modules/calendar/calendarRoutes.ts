@@ -69,6 +69,7 @@ export function createCalendarRoutes(calendarService: CalendarService): Router {
       await calendarService.assertCanCreateForOwner(callerId, ownerId)
       const created = await calendarService.createEvent({
         ownerId,
+        createdBy: callerId,
         title,
         startAt,
         endAt,

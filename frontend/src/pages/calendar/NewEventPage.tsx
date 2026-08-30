@@ -36,7 +36,6 @@ const emptyForm = {
   isHidden: false,
   isRecurring: false,
   recurrenceRule: "weekly" as RecurrenceRule,
-  isCompanyHoliday: false,
   roomId: "",
 }
 
@@ -90,11 +89,13 @@ export function NewEventPage() {
     }
   }, [targetOwnerId])
 
+  const viewOwnerId = targetOwnerId ?? user?.userId ?? null
+
   async function reload() {
-    if (!user) return
+    if (viewOwnerId === null) return
     const { from, to, fromDate, toDate } = rangeIso()
     const [eventData, companyHolidayData, holidayData] = await Promise.all([
-      listEvents(user.userId, from, to),
+      listEvents(viewOwnerId, from, to),
       listCompanyHolidays(from, to),
       listHolidaysInRange(fromDate, toDate),
     ])
@@ -104,12 +105,12 @@ export function NewEventPage() {
   }
 
   useEffect(() => {
-    if (!user) return
+    if (viewOwnerId === null) return
     let cancelled = false
     const { from, to, fromDate, toDate } = rangeIso()
 
     Promise.all([
-      listEvents(user.userId, from, to),
+      listEvents(viewOwnerId, from, to),
       listCompanyHolidays(from, to),
       listHolidaysInRange(fromDate, toDate),
     ])
@@ -126,20 +127,13 @@ export function NewEventPage() {
     return () => {
       cancelled = true
     }
-  }, [user])
+  }, [viewOwnerId])
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
     setError(null)
     try {
-      if (form.isCompanyHoliday) {
-        await createEvent({
-          title: form.title,
-          startAt: new Date(form.startAt).toISOString(),
-          endAt: new Date(form.endAt).toISOString(),
-          eventType: "company_holiday",
-        })
-      } else if (form.roomId) {
+      if (form.roomId) {
         await createReservation({
           roomId: Number(form.roomId),
           title: form.title,
@@ -200,7 +194,11 @@ export function NewEventPage() {
       <Link to="/calendar" className="mb-2 inline-block text-[12px] text-text-soft">
         ← スケジュールに戻る
       </Link>
-      <h1 className="mb-6 text-[18px] font-bold">個人予定の登録(本日から2週間)</h1>
+      <h1 className="mb-6 text-[18px] font-bold">
+        {targetOwnerId !== null
+          ? `${targetOwnerName ?? "利用者"}さんの予定登録(直近2週間)`
+          : "個人予定の登録(本日から2週間)"}
+      </h1>
 
       {targetOwnerId !== null && (
         <p className="mb-4 rounded-md bg-indigo-soft px-3 py-2 text-[12.5px] font-bold text-indigo">
@@ -245,17 +243,6 @@ export function NewEventPage() {
         </div>
 
         {targetOwnerId === null && (
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={form.isCompanyHoliday}
-              onChange={(e) => setForm({ ...form, isCompanyHoliday: e.target.checked })}
-            />
-            会社休日として登録する(公開対象「全員」で全社員に共有されます)
-          </label>
-        )}
-
-        {targetOwnerId === null && !form.isCompanyHoliday && (
           <div>
             <label className="mb-1 block text-[11.5px] font-bold text-text-soft">会議室(任意)</label>
             <select
@@ -278,7 +265,7 @@ export function NewEventPage() {
           </div>
         )}
 
-        {!form.isCompanyHoliday && !form.roomId && (
+        {!form.roomId && (
           <div className="flex flex-wrap items-center gap-4">
             <div>
               <label className="mb-1 block text-[11.5px] font-bold text-text-soft">公開対象</label>
@@ -359,7 +346,7 @@ export function NewEventPage() {
               className="flex items-center justify-between rounded-md border border-border bg-surface px-4 py-3 text-sm"
             >
               <div>
-                {item.occurrence.isOwnEvent ? (
+                {item.occurrence.canManage ? (
                   <Link
                     to={`/calendar/events/${item.occurrence.eventId}/edit`}
                     className="font-bold underline decoration-dotted underline-offset-2"
@@ -376,7 +363,7 @@ export function NewEventPage() {
                   {new Date(item.occurrence.endAt).toLocaleString("ja-JP")}
                 </span>
               </div>
-              {item.occurrence.isOwnEvent && (
+              {item.occurrence.canManage && (
                 <button onClick={() => handleDelete(item.occurrence.eventId)} className="text-coral">
                   削除
                 </button>

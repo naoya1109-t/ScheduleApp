@@ -10,6 +10,8 @@ export interface VisibleOccurrence {
   startAt: string
   endAt: string
   isOwnEvent: boolean
+  /** 所有者本人、または代理登録した本人であれば編集・削除できる */
+  canManage: boolean
   isBusyOnly: boolean
   title: string | null
 }
@@ -38,13 +40,6 @@ export interface CreatePersonalEventInput {
   ownerId?: number
 }
 
-export interface CreateCompanyHolidayInput {
-  title: string
-  startAt: string
-  endAt: string
-  eventType: "company_holiday"
-}
-
 export function listEvents(ownerId: number, from: string, to: string): Promise<VisibleOccurrence[]> {
   const params = new URLSearchParams({ ownerId: String(ownerId), from, to })
   return apiFetch<VisibleOccurrence[]>(`/api/calendar/events?${params.toString()}`)
@@ -55,7 +50,7 @@ export function listCompanyHolidays(from: string, to: string): Promise<VisibleOc
   return apiFetch<VisibleOccurrence[]>(`/api/calendar/company-holidays?${params.toString()}`)
 }
 
-export function createEvent(input: CreatePersonalEventInput | CreateCompanyHolidayInput) {
+export function createEvent(input: CreatePersonalEventInput) {
   return apiFetch("/api/calendar/events", {
     method: "POST",
     body: JSON.stringify(input),

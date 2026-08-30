@@ -79,7 +79,8 @@ export function WeeklySchedule() {
     <div className="flex flex-col gap-3.5">
       <div className="flex items-center justify-between">
         <div className="text-[12.5px] font-bold">
-          {days[0].getFullYear()}/{formatMd(days[0])} 〜 {formatMd(days[6])}
+          {days[0].getFullYear()}/{formatMd(days[0])}({WEEKDAY_LABELS[(days[0].getDay() + 6) % 7]}) 〜{" "}
+          {formatMd(days[6])}({WEEKDAY_LABELS[(days[6].getDay() + 6) % 7]})
         </div>
         <div className="flex items-center gap-1.5">
           <button
@@ -193,12 +194,12 @@ export function WeeklySchedule() {
                   <Link
                     to={`/calendar/new?date=${toDateOnly(day)}&ownerId=${row.userId}`}
                     title="この日の予定を登録"
-                    className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded bg-white/70 text-[12px] font-bold leading-none text-text-soft opacity-0 transition-opacity hover:bg-white hover:text-indigo group-hover:opacity-100"
+                    className="absolute left-1 top-1 flex h-4 w-4 items-center justify-center rounded bg-white/70 text-[12px] font-bold leading-none text-text-soft opacity-0 transition-opacity hover:bg-white hover:text-indigo group-hover:opacity-100"
                   >
                     +
                   </Link>
                   {dayOccurrences.map((occurrence) =>
-                    occurrence.isOwnEvent ? (
+                    occurrence.canManage ? (
                       <Link
                         key={occurrence.eventId}
                         to={`/calendar/events/${occurrence.eventId}/edit`}

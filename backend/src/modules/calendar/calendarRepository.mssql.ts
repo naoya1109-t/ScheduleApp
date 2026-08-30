@@ -12,6 +12,7 @@ import type {
 interface EventRow {
   event_id: number
   owner_id: number
+  created_by: number | null
   title: string
   start_at: string
   end_at: string
@@ -26,6 +27,7 @@ function toEvent(row: EventRow): CalendarEvent {
   return {
     eventId: row.event_id,
     ownerId: row.owner_id,
+    createdBy: row.created_by ?? row.owner_id,
     title: row.title,
     startAt: row.start_at,
     endAt: row.end_at,
@@ -80,11 +82,12 @@ export class MssqlEventRepository implements EventRepository {
     return row ? toEvent(row) : undefined
   }
 
-  async create(input: CreateEventInput & { eventType: CalendarEventType }): Promise<CalendarEvent> {
+  async create(input: CreateEventInput & { eventType: CalendarEventType; createdBy: number }): Promise<CalendarEvent> {
     const pool = await this.getPool()
     const result = await pool
       .request()
       .input("ownerId", input.ownerId)
+      .input("createdBy", input.createdBy)
       .input("title", input.title)
       .input("startAt", input.startAt)
       .input("endAt", input.endAt)
@@ -93,9 +96,9 @@ export class MssqlEventRepository implements EventRepository {
       .input("isRecurring", input.isRecurring)
       .input("recurrenceRule", input.isRecurring ? input.recurrenceRule : null)
       .input("eventType", input.eventType).query<{ event_id: number }>(`
-        INSERT INTO calendar_event (owner_id, title, start_at, end_at, visibility, is_hidden, is_recurring, recurrence_rule, event_type)
+        INSERT INTO calendar_event (owner_id, created_by, title, start_at, end_at, visibility, is_hidden, is_recurring, recurrence_rule, event_type)
         OUTPUT inserted.event_id
-        VALUES (@ownerId, @title, @startAt, @endAt, @visibility, @isHidden, @isRecurring, @recurrenceRule, @eventType)
+        VALUES (@ownerId, @createdBy, @title, @startAt, @endAt, @visibility, @isHidden, @isRecurring, @recurrenceRule, @eventType)
       `)
     const created = await this.findById(result.recordset[0].event_id)
     if (!created) {

@@ -277,4 +277,68 @@ describe("CalendarService 他利用者への代理登録", () => {
 
     await expect(service.assertCanCreateForOwner(1, 2)).rejects.toThrow(HttpError)
   })
+
+  it("代理登録した本人は、対象者の予定を後から編集・削除できる", async () => {
+    const { service } = setup()
+    const created = await service.createEvent({
+      ownerId: 2,
+      createdBy: 1,
+      title: "代理登録した予定",
+      startAt: "2026-09-02T09:00:00.000Z",
+      endAt: "2026-09-02T10:00:00.000Z",
+      visibility: "all",
+      isHidden: false,
+      isRecurring: false,
+      recurrenceRule: "none",
+    })
+
+    await expect(
+      service.updateEvent(created.eventId, 1, "general", { title: "代理登録した予定(修正)" }),
+    ).resolves.not.toThrow()
+    await expect(service.deleteEvent(created.eventId, 1, "general")).resolves.not.toThrow()
+  })
+
+  it("代理登録に関わっていない第三者は、対象者の予定を編集・削除できない", async () => {
+    const { service } = setup()
+    const created = await service.createEvent({
+      ownerId: 2,
+      createdBy: 1,
+      title: "代理登録した予定",
+      startAt: "2026-09-02T09:00:00.000Z",
+      endAt: "2026-09-02T10:00:00.000Z",
+      visibility: "all",
+      isHidden: false,
+      isRecurring: false,
+      recurrenceRule: "none",
+    })
+
+    await expect(
+      service.updateEvent(created.eventId, 3, "general", { title: "改ざん" }),
+    ).rejects.toThrow(HttpError)
+    await expect(service.deleteEvent(created.eventId, 3, "general")).rejects.toThrow(HttpError)
+  })
+
+  it("週表示のvisibleEventsで、代理登録した本人にはcanManage=trueが返る", async () => {
+    const { service } = setup()
+    await service.createEvent({
+      ownerId: 2,
+      createdBy: 1,
+      title: "代理登録した予定",
+      startAt: "2026-09-02T09:00:00.000Z",
+      endAt: "2026-09-02T10:00:00.000Z",
+      visibility: "all",
+      isHidden: false,
+      isRecurring: false,
+      recurrenceRule: "none",
+    })
+
+    const asCreator = await service.listVisibleEvents(2, 1, RANGE_FROM, RANGE_TO)
+    const asOwner = await service.listVisibleEvents(2, 2, RANGE_FROM, RANGE_TO)
+    const asOther = await service.listVisibleEvents(2, 3, RANGE_FROM, RANGE_TO)
+
+    expect(asCreator[0].canManage).toBe(true)
+    expect(asCreator[0].isOwnEvent).toBe(false)
+    expect(asOwner[0].canManage).toBe(true)
+    expect(asOther[0].canManage).toBe(false)
+  })
 })

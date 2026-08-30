@@ -22,7 +22,9 @@ export class FakeEventRepository implements EventRepository {
     return this.events.find((event) => event.eventId === eventId)
   }
 
-  async create(input: CreateEventInput & { eventType: CalendarEventType }): Promise<CalendarEvent> {
+  async create(
+    input: CreateEventInput & { eventType: CalendarEventType; createdBy: number },
+  ): Promise<CalendarEvent> {
     const event: CalendarEvent = { ...input, eventId: this.nextId++ }
     this.events.push(event)
     return event

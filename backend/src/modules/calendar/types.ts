@@ -5,6 +5,8 @@ export type CalendarEventType = "personal" | "company_holiday"
 export interface CalendarEvent {
   eventId: number
   ownerId: number
+  /** 代理登録した本人。自分自身で登録した場合はownerIdと同じ値になる */
+  createdBy: number
   title: string
   startAt: string
   endAt: string
@@ -17,6 +19,8 @@ export interface CalendarEvent {
 
 export interface CreateEventInput {
   ownerId: number
+  /** 省略時はownerIdと同じ(自分自身の登録)とみなす */
+  createdBy?: number
   title: string
   startAt: string
   endAt: string
@@ -44,6 +48,8 @@ export interface VisibleOccurrence {
   startAt: string
   endAt: string
   isOwnEvent: boolean
+  /** 所有者本人、または代理登録した本人であれば編集・削除できる */
+  canManage: boolean
   isBusyOnly: boolean
   title: string | null
 }
@@ -52,7 +58,7 @@ export interface EventRepository {
   listByOwnerAndRange(ownerId: number, from: string, to: string): Promise<CalendarEvent[]>
   listCompanyHolidaysInRange(from: string, to: string): Promise<CalendarEvent[]>
   findById(eventId: number): Promise<CalendarEvent | undefined>
-  create(input: CreateEventInput & { eventType: CalendarEventType }): Promise<CalendarEvent>
+  create(input: CreateEventInput & { eventType: CalendarEventType; createdBy: number }): Promise<CalendarEvent>
   update(eventId: number, input: UpdateEventInput): Promise<CalendarEvent>
   delete(eventId: number): Promise<void>
 }

@@ -73,6 +73,7 @@ export class RoomService {
     // 予約とカレンダー予定を連動表示するため、予約者本人のカレンダーにも同じ予定を反映する
     const linkedEvent = await this.eventRepository.create({
       ownerId: input.reserverId,
+      createdBy: input.reserverId,
       title: `[${room.name}] ${input.title}`,
       startAt: input.startAt,
       endAt: input.endAt,

@@ -13,8 +13,9 @@ export type CallerRole = "admin" | "general"
 
 function assertCanModify(event: CalendarEvent, callerId: number, callerRole: CallerRole): void {
   const isOwner = event.ownerId === callerId
+  const isCreator = event.createdBy === callerId
   const isAdminOverridingCompanyHoliday = event.eventType === "company_holiday" && callerRole === "admin"
-  if (!isOwner && !isAdminOverridingCompanyHoliday) {
+  if (!isOwner && !isCreator && !isAdminOverridingCompanyHoliday) {
     throw new HttpError(403, "この予定を変更する権限がありません")
   }
 }
@@ -47,10 +48,12 @@ export class CalendarService {
   }
 
   async createEvent(input: CreateEventInput) {
+    const createdBy = input.createdBy ?? input.ownerId
     if (input.eventType === "company_holiday") {
       // 会社休日は要件上「全員」向け・単発・通常表示で固定する(要件3-2)
       return this.repository.create({
         ...input,
+        createdBy,
         eventType: "company_holiday",
         visibility: "all",
         isHidden: false,
@@ -58,7 +61,7 @@ export class CalendarService {
         recurrenceRule: "none",
       })
     }
-    return this.repository.create({ ...input, eventType: "personal" })
+    return this.repository.create({ ...input, createdBy, eventType: "personal" })
   }
 
   /** 編集画面での事前表示用。閲覧できるのは変更権限を持つ本人(または会社休日の管理者)のみ */
@@ -119,6 +122,7 @@ export class CalendarService {
           startAt: occurrence.startAt.toISOString(),
           endAt: occurrence.endAt.toISOString(),
           isOwnEvent: isSelf,
+          canManage: isSelf || event.createdBy === viewerId,
           isBusyOnly: busyOnly,
           title: busyOnly ? null : event.title,
         })
@@ -151,6 +155,8 @@ export class CalendarService {
       startAt: event.startAt,
       endAt: event.endAt,
       isOwnEvent: false,
+      // 会社休日の編集可否は呼び出し側でownerId・管理者権限から個別に判定するため未使用
+      canManage: false,
       isBusyOnly: false,
       title: event.title,
     }))
