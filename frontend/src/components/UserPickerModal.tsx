@@ -9,14 +9,16 @@ export interface GroupedMembers {
 export function UserPickerModal({
   groupedMembers,
   selectedUserIds,
+  selectedGroupIds,
   onToggleUser,
-  onToggleGroup,
+  onToggleGroupSelection,
   onClose,
 }: {
   groupedMembers: GroupedMembers[]
   selectedUserIds: number[]
+  selectedGroupIds: number[]
   onToggleUser: (userId: number) => void
-  onToggleGroup: (memberIds: number[]) => void
+  onToggleGroupSelection: (groupId: number) => void
   onClose: () => void
 }) {
   const [query, setQuery] = useState("")
@@ -27,7 +29,7 @@ export function UserPickerModal({
       group,
       members: members.filter((member) => member.name.includes(normalizedQuery)),
     }))
-    .filter(({ members }) => members.length > 0)
+    .filter(({ group, members }) => members.length > 0 || group.name.includes(normalizedQuery))
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
@@ -44,7 +46,7 @@ export function UserPickerModal({
 
         <input
           className="mb-3 rounded-md border border-border px-3 py-2 text-sm"
-          placeholder="名前で検索"
+          placeholder="名前・グループ名で検索"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           autoFocus
@@ -52,28 +54,27 @@ export function UserPickerModal({
 
         <div className="flex-1 overflow-y-auto">
           {visibleGroups.map(({ group, members }) => {
-            const allSelected = members.every((member) => selectedUserIds.includes(member.userId))
+            const isGroupSelected = selectedGroupIds.includes(group.groupId)
             return (
               <div key={group.groupId} className="mb-3">
-                <div className="mb-1 flex items-center justify-between">
-                  <span className="text-[11.5px] font-bold text-text-soft">{group.name}</span>
-                  <button
-                    type="button"
-                    onClick={() => onToggleGroup(members.map((member) => member.userId))}
-                    className="text-[11px] font-bold text-indigo"
-                  >
-                    {allSelected ? "全員解除" : "全員選択"}
-                  </button>
-                </div>
+                <label className="mb-1 flex items-center gap-2 rounded-md bg-surface-alt px-2 py-1.5 text-sm font-bold">
+                  <input
+                    type="checkbox"
+                    checked={isGroupSelected}
+                    onChange={() => onToggleGroupSelection(group.groupId)}
+                  />
+                  {group.name}(グループ全体)
+                </label>
                 <div className="flex flex-col gap-0.5">
                   {members.map((member) => (
                     <label
                       key={member.userId}
-                      className="flex items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-surface-alt"
+                      className="flex items-center gap-2 rounded-md px-2 py-1 pl-6 text-sm hover:bg-surface-alt"
                     >
                       <input
                         type="checkbox"
-                        checked={selectedUserIds.includes(member.userId)}
+                        checked={isGroupSelected || selectedUserIds.includes(member.userId)}
+                        disabled={isGroupSelected}
                         onChange={() => onToggleUser(member.userId)}
                       />
                       {member.name}
@@ -84,7 +85,7 @@ export function UserPickerModal({
             )
           })}
           {visibleGroups.length === 0 && (
-            <p className="text-[12.5px] text-text-soft">該当する利用者がいません。</p>
+            <p className="text-[12.5px] text-text-soft">該当する利用者・グループがいません。</p>
           )}
         </div>
 

@@ -39,8 +39,20 @@ export function NewEventPage() {
     }
     return user ? [user.userId] : []
   })
+  const [selectedGroupIds, setSelectedGroupIds] = useState<number[]>([])
 
-  const isSelfOnly = selectedUserIds.length === 1 && selectedUserIds[0] === user?.userId
+  const finalTargetIds = (() => {
+    const set = new Set(selectedUserIds)
+    for (const groupId of selectedGroupIds) {
+      const group = groupedMembers.find((g) => g.group.groupId === groupId)
+      if (group) {
+        for (const member of group.members) set.add(member.userId)
+      }
+    }
+    return Array.from(set)
+  })()
+
+  const isSelfOnly = finalTargetIds.length === 1 && finalTargetIds[0] === user?.userId
 
   useEffect(() => {
     listRooms().then(setRooms)
@@ -81,15 +93,18 @@ export function NewEventPage() {
     )
   }
 
-  function toggleGroup(memberIds: number[]) {
-    setSelectedUserIds((prev) => {
-      const allSelected = memberIds.every((id) => prev.includes(id))
-      if (allSelected) {
-        return prev.filter((id) => !memberIds.includes(id))
+  function toggleGroupSelection(groupId: number) {
+    setSelectedGroupIds((prev) => {
+      if (prev.includes(groupId)) {
+        return prev.filter((id) => id !== groupId)
       }
-      const next = new Set(prev)
-      for (const id of memberIds) next.add(id)
-      return Array.from(next)
+      // グループ選択時は個別選択されていたそのグループのメンバーをまとめて外し、グループ側の選択に一本化する
+      const group = groupedMembers.find((g) => g.group.groupId === groupId)
+      if (group) {
+        const memberIds = new Set(group.members.map((member) => member.userId))
+        setSelectedUserIds((users) => users.filter((id) => !memberIds.has(id)))
+      }
+      return [...prev, groupId]
     })
   }
 
@@ -115,14 +130,14 @@ export function NewEventPage() {
       return
     }
 
-    if (selectedUserIds.length === 0) {
+    if (finalTargetIds.length === 0) {
       setError("登録先の利用者を1人以上選択してください")
       return
     }
 
     setSubmitting(true)
     try {
-      for (const ownerId of selectedUserIds) {
+      for (const ownerId of finalTargetIds) {
         await createEvent({
           title: form.title,
           startAt: new Date(form.startAt).toISOString(),
@@ -191,6 +206,21 @@ export function NewEventPage() {
               登録先の利用者(複数選択可)
             </label>
             <div className="flex flex-wrap items-center gap-2 rounded-md border border-border p-3">
+              {selectedGroupIds.map((groupId) => (
+                <span
+                  key={`group-${groupId}`}
+                  className="flex items-center gap-1.5 rounded-full bg-teal-soft px-2.5 py-1 text-[12px] font-bold text-teal"
+                >
+                  {groupedMembers.find((g) => g.group.groupId === groupId)?.group.name ?? "グループ"}(グループ全体)
+                  <button
+                    type="button"
+                    onClick={() => toggleGroupSelection(groupId)}
+                    className="text-teal/70 hover:text-teal"
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))}
               {selectedUserIds.map((userId) => (
                 <span
                   key={userId}
@@ -206,7 +236,7 @@ export function NewEventPage() {
                   </button>
                 </span>
               ))}
-              {selectedUserIds.length === 0 && (
+              {finalTargetIds.length === 0 && (
                 <span className="text-[12px] text-text-soft">利用者が選択されていません</span>
               )}
               {user && !selectedUserIds.includes(user.userId) && (
@@ -309,8 +339,9 @@ export function NewEventPage() {
         <UserPickerModal
           groupedMembers={groupedMembers}
           selectedUserIds={selectedUserIds}
+          selectedGroupIds={selectedGroupIds}
           onToggleUser={toggleUser}
-          onToggleGroup={toggleGroup}
+          onToggleGroupSelection={toggleGroupSelection}
           onClose={() => setPickerOpen(false)}
         />
       )}
